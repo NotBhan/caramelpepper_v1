@@ -37,7 +37,7 @@ export function CodeEditor({
             <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-white">
               <Copy className="w-3 h-3" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500/70 hover:text-red-500 hover:bg-red-500/10"> // why is this here?
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500/70 hover:text-red-500 hover:bg-red-500/10">
               <Trash2 className="w-3 h-3" />
             </Button>
             <Button 
