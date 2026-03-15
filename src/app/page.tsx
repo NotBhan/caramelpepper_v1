@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from "react"
@@ -5,6 +6,7 @@ import { Sidebar } from "@/components/dashboard/Sidebar"
 import { CodeEditor } from "@/components/dashboard/CodeEditor"
 import { AnalysisPanel } from "@/components/dashboard/AnalysisPanel"
 import { RefactorPanel } from "@/components/dashboard/RefactorPanel"
+import { WorkspaceLayout } from "@/components/dashboard/WorkspaceLayout"
 import { calculateComplexity, type ComplexityMetrics } from "@/lib/complexity"
 import { analyzeCodeStyle, type CodeStyleOutput } from "@/ai/flows/code-style-alignment"
 import { localCodeRefactoring, type LocalCodeRefactoringOutput } from "@/ai/flows/local-code-refactoring"
@@ -39,15 +41,12 @@ export default function Dashboard() {
   const handleAnalyze = async () => {
     setIsBusy(true)
     try {
-      // 1. Physical Complexity Analysis (Mathematical)
       const newMetrics = calculateComplexity(code)
       setMetrics(newMetrics)
 
-      // 2. AI Style Detective
       const style = await analyzeCodeStyle({ code })
       setStyleReport(style)
 
-      // 3. Local LLM Refactoring Suggestions
       const refactor = await localCodeRefactoring({ 
         code, 
         language: 'typescript' 
@@ -56,12 +55,12 @@ export default function Dashboard() {
 
       toast({
         title: "Analysis Complete",
-        description: `Risk level: ${newMetrics.risk.toUpperCase()}`,
+        description: `Code integrity: ${newMetrics.risk.toUpperCase()}`,
       })
     } catch (err) {
       toast({
         title: "Analysis Error",
-        description: "Failed to connect to local AI node.",
+        description: "Failed to connect to local AI engine.",
         variant: "destructive",
       })
     } finally {
@@ -75,47 +74,48 @@ export default function Dashboard() {
     setMetrics(calculateComplexity(newCode))
     toast({
       title: "Refactor Applied",
-      description: "Code has been updated based on AI suggestions.",
+      description: "Codebase synchronized with AI suggestions.",
     })
   }
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden selection:bg-primary/30 selection:text-white">
-      <Sidebar />
-      
-      <main className="flex-1 flex flex-col min-w-0">
-        <div className="flex-1 flex min-h-0">
-          {/* Main Editor Pane */}
-          <div className="flex-1 min-w-0">
-            <CodeEditor 
-              value={code} 
-              onChange={setCode} 
-              onAnalyze={handleAnalyze}
-              isAnalyzing={isBusy}
-            />
-          </div>
-
-          {/* Right Analysis Pane */}
-          <div className="w-80 border-l bg-card/20 shrink-0">
-            <AnalysisPanel 
-              metrics={metrics} 
-              style={styleReport}
-              isAnalyzing={isBusy}
-            />
-          </div>
-        </div>
-
-        {/* Bottom Refactoring Suggestions Pane */}
-        <div className="h-64 border-t shrink-0">
+    <>
+      <WorkspaceLayout
+        sidebar={<Sidebar />}
+        editor={
+          <CodeEditor 
+            value={code} 
+            onChange={setCode} 
+            onAnalyze={handleAnalyze}
+            isAnalyzing={isBusy}
+          />
+        }
+        refactor={
+          <CodeEditor 
+            title="refactor_preview.ts"
+            value={refactorReport?.refactoredCode || "// Refactored code will appear here..."} 
+            onChange={() => {}} 
+            onAnalyze={() => {}}
+            isAnalyzing={false}
+            isReadOnly={true}
+          />
+        }
+        analysis={
+          <AnalysisPanel 
+            metrics={metrics} 
+            style={styleReport}
+            isAnalyzing={isBusy}
+          />
+        }
+        bottom={
           <RefactorPanel 
             suggestions={refactorReport} 
             isRefactoring={isBusy}
             onApply={applyRefactor}
           />
-        </div>
-      </main>
-      
+        }
+      />
       <Toaster />
-    </div>
+    </>
   )
 }
