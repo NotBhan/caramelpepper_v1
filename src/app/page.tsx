@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from "react"
@@ -60,7 +61,7 @@ export default function Dashboard() {
     } catch (err) {
       toast({
         title: "Analysis Error",
-        description: "Inference engine failed. Check your API settings.",
+        description: "Inference engine failed. Check your vault settings.",
         variant: "destructive",
       })
     } finally {
@@ -117,8 +118,8 @@ export default function Dashboard() {
         onOpenChange={setIsSettingsOpen}
         provider={store.inferenceProvider}
         onProviderChange={store.setInferenceProvider}
-        apiKeys={store.apiKeys}
-        onApiKeyChange={store.setApiKey}
+        keyStatus={store.keyStatus}
+        onSaveKey={store.saveApiKey}
       />
       
       <Toaster />

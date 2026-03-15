@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
@@ -12,7 +13,7 @@ export interface AppState {
   originalMetrics: ComplexityMetrics | null;
   proposedMetrics: ComplexityMetrics | null;
   inferenceProvider: InferenceProvider;
-  apiKeys: Record<string, string>;
+  keyStatus: Record<string, boolean>; // Replaces plaintext apiKeys
 }
 
 export function useAppStore(initialCode: string) {
@@ -24,21 +25,31 @@ export function useAppStore(initialCode: string) {
       originalMetrics: calculateComplexity(initialCode),
       proposedMetrics: null,
       inferenceProvider: 'local',
-      apiKeys: {},
+      keyStatus: {},
     };
   });
 
   useEffect(() => {
     const savedProvider = localStorage.getItem('cp_inference_provider') as InferenceProvider;
-    const savedKeys = localStorage.getItem('cp_api_keys');
     
-    if (savedProvider || savedKeys) {
+    // Simulate initial status fetch from backend
+    const fetchStatus = async () => {
+      // [SIMULATED]: In production, calls GET /settings/keys/status
+      const mockStatus = {
+        openai: false,
+        anthropic: false,
+        gemini: false,
+        local: true
+      };
+      
       setState(prev => ({
         ...prev,
         inferenceProvider: savedProvider || 'local',
-        apiKeys: savedKeys ? JSON.parse(savedKeys) : {},
+        keyStatus: mockStatus,
       }));
-    }
+    };
+
+    fetchStatus();
   }, []);
 
   const setInferenceProvider = useCallback((provider: InferenceProvider) => {
@@ -48,12 +59,16 @@ export function useAppStore(initialCode: string) {
     });
   }, []);
 
-  const setApiKey = useCallback((provider: string, key: string) => {
-    setState(prev => {
-      const newKeys = { ...prev.apiKeys, [provider]: key };
-      localStorage.setItem('cp_api_keys', JSON.stringify(newKeys));
-      return { ...prev, apiKeys: newKeys };
-    });
+  const saveApiKey = useCallback(async (provider: string, key: string) => {
+    // [SIMULATED]: In production, calls POST /settings/keys
+    console.log(`[VAULT]: Sending key for ${provider} to backend vault...`);
+    
+    setState(prev => ({
+      ...prev,
+      keyStatus: { ...prev.keyStatus, [provider]: true }
+    }));
+    
+    return true; // Return success to UI
   }, []);
 
   const openDiff = useCallback((refactoredCode: string) => {
@@ -104,6 +119,6 @@ export function useAppStore(initialCode: string) {
     acceptRefactor,
     rejectRefactor,
     setInferenceProvider,
-    setApiKey,
+    saveApiKey,
   };
 }

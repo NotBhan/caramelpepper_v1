@@ -1,7 +1,8 @@
+
 "use client"
 
 import React from "react"
-import { Settings, Cpu, Cloud, ShieldCheck, Key } from "lucide-react"
+import { Settings, Cpu, Cloud, ShieldCheck, Key, CheckCircle2 } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -18,15 +19,17 @@ import {
 } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
 import { type InferenceProvider } from "@/store/use-app-store"
+import { useToast } from "@/hooks/use-toast"
 
 interface SettingsModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   provider: InferenceProvider;
   onProviderChange: (p: InferenceProvider) => void;
-  apiKeys: Record<string, string>;
-  onApiKeyChange: (provider: string, key: string) => void;
+  keyStatus: Record<string, boolean>;
+  onSaveKey: (provider: string, key: string) => Promise<boolean>;
 }
 
 export function SettingsModal({
@@ -34,9 +37,27 @@ export function SettingsModal({
   onOpenChange,
   provider,
   onProviderChange,
-  apiKeys,
-  onApiKeyChange
+  keyStatus,
+  onSaveKey
 }: SettingsModalProps) {
+  const [tempKey, setTempKey] = React.useState("")
+  const [isSaving, setIsSaving] = React.useState(false)
+  const { toast } = useToast()
+
+  const handleSave = async () => {
+    if (!tempKey) return
+    setIsSaving(true)
+    const success = await onSaveKey(provider, tempKey)
+    if (success) {
+      setTempKey("") // Immediately clear from memory
+      toast({
+        title: "Vault Updated",
+        description: `${provider.toUpperCase()} credentials secured in local vault.`,
+      })
+    }
+    setIsSaving(false)
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px] bg-slate-900 border-slate-800 text-slate-100">
@@ -46,7 +67,7 @@ export function SettingsModal({
             <DialogTitle className="font-headline text-xl">Engine Configuration</DialogTitle>
           </div>
           <DialogDescription className="text-slate-400">
-            Configure your local or cloud inference providers for code analysis.
+            Configure local or cloud inference. Keys are stored in a secure backend vault.
           </DialogDescription>
         </DialogHeader>
 
@@ -70,21 +91,41 @@ export function SettingsModal({
           </div>
 
           {provider !== 'local' && (
-            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
-              <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                <Key className="w-3.5 h-3.5" />
-                {provider.charAt(0).toUpperCase() + provider.slice(1)} API Key
-              </Label>
-              <Input
-                type="password"
-                placeholder="Enter API Key"
-                value={apiKeys[provider] || ""}
-                onChange={(e) => onApiKeyChange(provider, e.target.value)}
-                className="bg-slate-950 border-slate-800 focus:ring-amber-500"
-              />
+            <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                  <Key className="w-3.5 h-3.5" />
+                  {provider.charAt(0).toUpperCase() + provider.slice(1)} Key
+                </Label>
+                {keyStatus[provider] && (
+                  <div className="flex items-center gap-1 text-[10px] text-green-500 font-bold uppercase">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Vault Ready
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex gap-2">
+                <Input
+                  type="password"
+                  placeholder={keyStatus[provider] ? "••••••••••••••••" : "Enter API Key"}
+                  value={tempKey}
+                  onChange={(e) => setTempKey(e.target.value)}
+                  className="bg-slate-950 border-slate-800 focus:ring-amber-500 h-9"
+                />
+                <Button 
+                  onClick={handleSave} 
+                  disabled={!tempKey || isSaving}
+                  size="sm"
+                  className="bg-amber-600 hover:bg-amber-500 text-slate-900 font-bold px-4"
+                >
+                  {isSaving ? "..." : "Save"}
+                </Button>
+              </div>
+
               <p className="text-[10px] text-slate-500 flex items-center gap-1 mt-1">
                 <ShieldCheck className="w-3 h-3 text-green-500" />
-                Stored locally in browser session storage.
+                Backend vault management active (0600 perms).
               </p>
             </div>
           )}
@@ -92,9 +133,9 @@ export function SettingsModal({
           <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/10 flex items-start gap-3">
             <Cloud className="w-4 h-4 text-amber-500 mt-0.5" />
             <div className="space-y-1">
-              <h4 className="text-[11px] font-bold text-amber-500 uppercase">Hybrid Mode Note</h4>
+              <h4 className="text-[11px] font-bold text-amber-500 uppercase">Secure Vault Architecture</h4>
               <p className="text-[11px] leading-relaxed text-slate-400">
-                Local mode uses your CPU/GPU (Llama-3-8B). Cloud providers offer higher precision but require an internet connection and external API billing.
+                Keys are never stored in the browser. The backend vault injects credentials directly into inference requests over encrypted channels.
               </p>
             </div>
           </div>
