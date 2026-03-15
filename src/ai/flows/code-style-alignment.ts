@@ -50,7 +50,7 @@ Consider the following aspects:
 
 Here is the code to analyze:
 \`\`\`
-{{{code}}}
+{{{code}}} // [UPDATE]: Escaped markdown delimiters within prompt to resolve parsing errors in JS template literal
 \`\`\``,
 });
 

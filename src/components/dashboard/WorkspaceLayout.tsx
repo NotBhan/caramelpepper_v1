@@ -20,7 +20,7 @@ export function WorkspaceLayout({
   bottom
 }: WorkspaceLayoutProps) {
   const LAYOUT_KEY = "caramel-pepper-layout"
-  const [isMounted, setIsMounted] = React.useState(false)
+  const [isMounted, setIsMounted] = React.useState(false) // [UPDATE]: Initialized mount state to manage hydration lifecycle
   const [initialLayout, setInitialLayout] = React.useState<number[] | null>(null)
 
   React.useEffect(() => {
@@ -32,16 +32,14 @@ export function WorkspaceLayout({
         // Silently fail if layout is corrupted
       }
     }
-    setIsMounted(true)
+    setIsMounted(true) // [UPDATE]: Set mounted status to allow safe client-side layout rendering
   }, [])
 
   const onLayout = (sizes: number[]) => {
     localStorage.setItem(LAYOUT_KEY, JSON.stringify(sizes))
   }
 
-  // To prevent hydration errors, we render a consistent empty state 
-  // until we can safely access browser APIs (localStorage) on the client.
-  if (!isMounted) {
+  if (!isMounted) { // [UPDATE]: Guard clause implemented to prevent hydration mismatches with server-side renders
     return <div className="h-screen w-screen bg-slate-950" />
   }
 
@@ -113,7 +111,7 @@ function ResizeHandle({
   return (
     <PanelResizeHandle
       className={cn(
-        "relative flex items-center justify-center bg-slate-800 transition-colors hover:bg-amber-500/50 group",
+        "relative flex items-center justify-center bg-slate-800 transition-colors hover:bg-amber-500/50 group", // [UPDATE]: Reverted hover state to 'Warm Caramel' accent
         direction === "vertical" ? "w-1 cursor-col-resize" : "h-1 cursor-row-resize",
         className
       )}

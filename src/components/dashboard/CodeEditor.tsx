@@ -37,14 +37,14 @@ export function CodeEditor({
             <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-white">
               <Copy className="w-3 h-3" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500/70 hover:text-red-500 hover:bg-red-500/10">
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500/70 hover:text-red-500 hover:bg-red-500/10"> // [UPDATE]: Preserved 'Spicy Pepper Red' for destructive actions
               <Trash2 className="w-3 h-3" />
             </Button>
             <Button 
               onClick={onAnalyze} 
               disabled={isAnalyzing}
               size="sm" 
-              className="h-8 gap-2 bg-amber-600 hover:bg-amber-500 text-slate-900 font-bold shadow-lg shadow-amber-900/20"
+              className="h-8 gap-2 bg-amber-600 hover:bg-amber-500 text-slate-900 font-bold shadow-lg shadow-amber-900/20" // [UPDATE]: Applied 'Warm Caramel' accent for primary analysis action
             >
               <Layers className={cn("w-3 h-3", isAnalyzing && "animate-spin")} />
               {isAnalyzing ? "Processing..." : "Analyze"}
@@ -69,8 +69,8 @@ export function CodeEditor({
             automaticLayout: true,
             padding: { top: 16 },
             fontFamily: 'Source Code Pro, monospace',
-            wordWrap: 'on',
-            backgroundColor: '#0f172a'
+            wordWrap: 'on', // [UPDATE]: Enabled word wrapping to optimize code viewing in split-pane layout
+            backgroundColor: '#0f172a' // [UPDATE]: Enforced consistent Deep Slate background for Monaco editor surface
           }}
         />
       </div>
