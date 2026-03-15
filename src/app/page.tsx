@@ -13,6 +13,7 @@ import { analyzeCodeStyle } from "@/ai/flows/code-style-alignment"
 import { localCodeRefactoring } from "@/ai/flows/local-code-refactoring"
 import { Toaster } from "@/components/ui/toaster"
 import { useToast } from "@/hooks/use-toast"
+import { SettingsModal } from "@/components/dashboard/SettingsModal"
 
 const DEFAULT_CODE = `function processData(data: any[]) {
   let results = [];
@@ -35,6 +36,7 @@ export default function Dashboard() {
   const store = useAppStore(DEFAULT_CODE)
   const [styleReport, setStyleReport] = React.useState<any>(null)
   const [isBusy, setIsBusy] = React.useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false)
   const { toast } = useToast()
 
   const handleAnalyze = async () => {
@@ -49,17 +51,17 @@ export default function Dashboard() {
       })
       
       if (refactor.refactoredCode) {
-        store.openDiff(refactor.refactoredCode) // [UPDATE]: Triggered visual diff instead of instant overwrite
+        store.openDiff(refactor.refactoredCode)
       }
 
       toast({
         title: "Analysis Complete",
-        description: `Code integrity: ${store.originalMetrics?.risk.toUpperCase()}`,
+        description: `Provider: ${store.inferenceProvider.toUpperCase()} | Risk: ${store.originalMetrics?.risk.toUpperCase()}`,
       })
     } catch (err) {
       toast({
         title: "Analysis Error",
-        description: "Failed to connect to local AI engine.",
+        description: "Inference engine failed. Check your API settings.",
         variant: "destructive",
       })
     } finally {
@@ -71,7 +73,12 @@ export default function Dashboard() {
     <>
       <WorkspaceLayout
         isDiffOpen={store.isDiffOpen}
-        sidebar={<Sidebar />}
+        sidebar={
+          <Sidebar 
+            onOpenSettings={() => setIsSettingsOpen(true)} 
+            activeProvider={store.inferenceProvider}
+          />
+        }
         editor={
           <CodeEditor 
             value={store.code} 
@@ -105,6 +112,16 @@ export default function Dashboard() {
           />
         }
       />
+      
+      <SettingsModal 
+        isOpen={isSettingsOpen}
+        onOpenChange={setIsSettingsOpen}
+        provider={store.inferenceProvider}
+        onProviderChange={store.setInferenceProvider}
+        apiKeys={store.apiKeys}
+        onApiKeyChange={store.setApiKey}
+      />
+      
       <Toaster />
     </>
   )

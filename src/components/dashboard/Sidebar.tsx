@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from "react"
@@ -26,7 +27,12 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }: SidebarItemProps) =
   </button>
 )
 
-export function Sidebar() {
+interface SidebarProps {
+  onOpenSettings: () => void;
+  activeProvider: string;
+}
+
+export function Sidebar({ onOpenSettings, activeProvider }: SidebarProps) {
   const [activeTab, setActiveTab] = React.useState('editor')
 
   return (
@@ -76,14 +82,16 @@ export function Sidebar() {
       </div>
 
       <div className="p-4 border-t border-slate-800 bg-slate-950">
-        <SidebarItem icon={Settings} label="Settings" onClick={() => {}} />
+        <SidebarItem icon={Settings} label="Settings" onClick={onOpenSettings} />
         <div className="mt-4 flex items-center gap-3 px-3 py-2 bg-slate-900 rounded-lg border border-slate-800">
           <div className="w-7 h-7 rounded-full bg-amber-600 flex items-center justify-center text-[10px] font-bold text-slate-900 shadow-lg shadow-amber-900/20">
             CP
           </div>
           <div className="flex flex-col">
-            <span className="text-[11px] font-medium text-slate-200">Local Instance</span>
-            <span className="text-[9px] text-slate-500 font-mono">Llama-3-8B-v1</span>
+            <span className="text-[11px] font-medium text-slate-200">{activeProvider === 'local' ? 'Local Instance' : 'Cloud Proxy'}</span>
+            <span className="text-[9px] text-slate-500 font-mono">
+              {activeProvider === 'local' ? 'Llama-3-8B' : activeProvider.toUpperCase()}
+            </span>
           </div>
         </div>
       </div>
