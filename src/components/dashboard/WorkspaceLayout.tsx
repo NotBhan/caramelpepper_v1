@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from "react"
@@ -10,6 +11,7 @@ interface WorkspaceLayoutProps {
   refactor: React.ReactNode;
   analysis: React.ReactNode;
   bottom: React.ReactNode;
+  isDiffOpen?: boolean;
 }
 
 export function WorkspaceLayout({
@@ -17,29 +19,23 @@ export function WorkspaceLayout({
   editor,
   refactor,
   analysis,
-  bottom
+  bottom,
+  isDiffOpen = false
 }: WorkspaceLayoutProps) {
   const LAYOUT_KEY = "caramel-pepper-layout"
-  const [isMounted, setIsMounted] = React.useState(false) // [UPDATE]: Initialized mount state to manage hydration lifecycle
-  const [initialLayout, setInitialLayout] = React.useState<number[] | null>(null)
+  const [isMounted, setIsMounted] = React.useState(false)
 
   React.useEffect(() => {
-    const saved = localStorage.getItem(LAYOUT_KEY)
-    if (saved) {
-      try {
-        setInitialLayout(JSON.parse(saved))
-      } catch (e) {
-        // Silently fail if layout is corrupted
-      }
-    }
-    setIsMounted(true) // [UPDATE]: Set mounted status to allow safe client-side layout rendering
+    setIsMounted(true)
   }, [])
 
   const onLayout = (sizes: number[]) => {
-    localStorage.setItem(LAYOUT_KEY, JSON.stringify(sizes))
+    if (isMounted) {
+      localStorage.setItem(LAYOUT_KEY, JSON.stringify(sizes))
+    }
   }
 
-  if (!isMounted) { // [UPDATE]: Guard clause implemented to prevent hydration mismatches with server-side renders
+  if (!isMounted) {
     return <div className="h-screen w-screen bg-slate-950" />
   }
 
@@ -48,7 +44,7 @@ export function WorkspaceLayout({
       <PanelGroup direction="horizontal" onLayout={onLayout}>
         {/* Project Explorer / Sidebar */}
         <Panel
-          defaultSize={initialLayout ? initialLayout[0] : 15}
+          defaultSize={15}
           minSize={10}
           maxSize={25}
           className="bg-slate-900/50"
@@ -59,21 +55,27 @@ export function WorkspaceLayout({
         <ResizeHandle direction="vertical" />
 
         {/* Main Workspace Area */}
-        <Panel defaultSize={initialLayout ? initialLayout[1] : 65}>
+        <Panel defaultSize={65}>
           <PanelGroup direction="vertical">
             <Panel defaultSize={80} minSize={20}>
               <PanelGroup direction="horizontal">
                 {/* Primary Code Editor */}
-                <Panel defaultSize={50} minSize={10}>
-                  {editor}
+                <Panel defaultSize={isDiffOpen ? 40 : 100} minSize={10}>
+                  <div className="h-full transition-all duration-300 ease-in-out">
+                    {editor}
+                  </div>
                 </Panel>
                 
-                <ResizeHandle direction="vertical" />
+                {isDiffOpen && <ResizeHandle direction="vertical" />}
 
                 {/* AI Refactor Preview / Diff */}
-                <Panel defaultSize={50} minSize={10}>
-                  {refactor}
-                </Panel>
+                {isDiffOpen && (
+                  <Panel defaultSize={60} minSize={10}>
+                    <div className="h-full animate-in slide-in-from-right duration-300">
+                      {refactor}
+                    </div>
+                  </Panel>
+                )}
               </PanelGroup>
             </Panel>
 
@@ -90,7 +92,7 @@ export function WorkspaceLayout({
 
         {/* Right Analysis Panel */}
         <Panel
-          defaultSize={initialLayout ? initialLayout[2] : 20}
+          defaultSize={20}
           minSize={15}
           maxSize={30}
         >
@@ -111,7 +113,7 @@ function ResizeHandle({
   return (
     <PanelResizeHandle
       className={cn(
-        "relative flex items-center justify-center bg-slate-800 transition-colors hover:bg-amber-500/50 group", // [UPDATE]: Reverted hover state to 'Warm Caramel' accent
+        "relative flex items-center justify-center bg-slate-800 transition-colors hover:bg-amber-500/50 group",
         direction === "vertical" ? "w-1 cursor-col-resize" : "h-1 cursor-row-resize",
         className
       )}

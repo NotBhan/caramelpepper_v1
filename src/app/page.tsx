@@ -6,10 +6,11 @@ import { Sidebar } from "@/components/dashboard/Sidebar"
 import { CodeEditor } from "@/components/dashboard/CodeEditor"
 import { AnalysisPanel } from "@/components/dashboard/AnalysisPanel"
 import { RefactorPanel } from "@/components/dashboard/RefactorPanel"
+import { DiffViewer } from "@/components/dashboard/DiffViewer"
 import { WorkspaceLayout } from "@/components/dashboard/WorkspaceLayout"
-import { calculateComplexity, type ComplexityMetrics } from "@/lib/complexity"
-import { analyzeCodeStyle, type CodeStyleOutput } from "@/ai/flows/code-style-alignment"
-import { localCodeRefactoring, type LocalCodeRefactoringOutput } from "@/ai/flows/local-code-refactoring"
+import { useAppStore } from "@/store/use-app-store"
+import { analyzeCodeStyle } from "@/ai/flows/code-style-alignment"
+import { localCodeRefactoring } from "@/ai/flows/local-code-refactoring"
 import { Toaster } from "@/components/ui/toaster"
 import { useToast } from "@/hooks/use-toast"
 
@@ -31,31 +32,29 @@ const DEFAULT_CODE = `function processData(data: any[]) {
 }`;
 
 export default function Dashboard() {
-  const [code, setCode] = React.useState(DEFAULT_CODE)
-  const [metrics, setMetrics] = React.useState<ComplexityMetrics | null>(null)
-  const [styleReport, setStyleReport] = React.useState<CodeStyleOutput | null>(null)
-  const [refactorReport, setRefactorReport] = React.useState<LocalCodeRefactoringOutput | null>(null)
+  const store = useAppStore(DEFAULT_CODE)
+  const [styleReport, setStyleReport] = React.useState<any>(null)
   const [isBusy, setIsBusy] = React.useState(false)
   const { toast } = useToast()
 
   const handleAnalyze = async () => {
     setIsBusy(true)
     try {
-      const newMetrics = calculateComplexity(code)
-      setMetrics(newMetrics)
-
-      const style = await analyzeCodeStyle({ code })
+      const style = await analyzeCodeStyle({ code: store.code })
       setStyleReport(style)
 
       const refactor = await localCodeRefactoring({ 
-        code, 
+        code: store.code, 
         language: 'typescript' 
       })
-      setRefactorReport(refactor)
+      
+      if (refactor.refactoredCode) {
+        store.openDiff(refactor.refactoredCode) // [UPDATE]: Triggered visual diff instead of instant overwrite
+      }
 
       toast({
         title: "Analysis Complete",
-        description: `Code integrity: ${newMetrics.risk.toUpperCase()}`,
+        description: `Code integrity: ${store.originalMetrics?.risk.toUpperCase()}`,
       })
     } catch (err) {
       toast({
@@ -68,50 +67,41 @@ export default function Dashboard() {
     }
   }
 
-  const applyRefactor = (newCode: string) => {
-    setCode(newCode)
-    setRefactorReport(null)
-    setMetrics(calculateComplexity(newCode))
-    toast({
-      title: "Refactor Applied",
-      description: "Codebase synchronized with AI suggestions.",
-    })
-  }
-
   return (
     <>
       <WorkspaceLayout
+        isDiffOpen={store.isDiffOpen}
         sidebar={<Sidebar />}
         editor={
           <CodeEditor 
-            value={code} 
-            onChange={setCode} 
+            value={store.code} 
+            onChange={store.setCode} 
             onAnalyze={handleAnalyze}
             isAnalyzing={isBusy}
           />
         }
         refactor={
-          <CodeEditor 
-            title="refactor_preview.ts"
-            value={refactorReport?.refactoredCode || "// Refactored code will appear here..."} 
-            onChange={() => {}} 
-            onAnalyze={() => {}}
-            isAnalyzing={false}
-            isReadOnly={true}
+          <DiffViewer 
+            original={store.code}
+            modified={store.proposedCode}
+            originalMetrics={store.originalMetrics}
+            proposedMetrics={store.proposedMetrics}
+            onAccept={store.acceptRefactor}
+            onReject={store.rejectRefactor}
           />
         }
         analysis={
           <AnalysisPanel 
-            metrics={metrics} 
+            metrics={store.originalMetrics} 
             style={styleReport}
             isAnalyzing={isBusy}
           />
         }
         bottom={
           <RefactorPanel 
-            suggestions={refactorReport} 
+            suggestions={null} 
             isRefactoring={isBusy}
-            onApply={applyRefactor}
+            onApply={() => {}}
           />
         }
       />
