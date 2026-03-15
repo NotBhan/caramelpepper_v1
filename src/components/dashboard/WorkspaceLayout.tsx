@@ -19,24 +19,35 @@ export function WorkspaceLayout({
   analysis,
   bottom
 }: WorkspaceLayoutProps) {
-  // Persistence key
   const LAYOUT_KEY = "caramel-pepper-layout"
+  const [isMounted, setIsMounted] = React.useState(false)
+  const [initialLayout, setInitialLayout] = React.useState<number[] | null>(null)
+
+  React.useEffect(() => {
+    const saved = localStorage.getItem(LAYOUT_KEY)
+    if (saved) {
+      try {
+        setInitialLayout(JSON.parse(saved))
+      } catch (e) {
+        // Silently fail if layout is corrupted
+      }
+    }
+    setIsMounted(true)
+  }, [])
 
   const onLayout = (sizes: number[]) => {
     localStorage.setItem(LAYOUT_KEY, JSON.stringify(sizes))
   }
 
-  const getInitialLayout = () => {
-    if (typeof window === "undefined") return undefined
-    const saved = localStorage.getItem(LAYOUT_KEY)
-    return saved ? JSON.parse(saved) : undefined
+  // To prevent hydration errors, we render a consistent empty state 
+  // until we can safely access browser APIs (localStorage) on the client.
+  if (!isMounted) {
+    return <div className="h-screen w-screen bg-slate-950" />
   }
-
-  const initialLayout = getInitialLayout()
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-slate-950 text-slate-50 flex flex-col">
-      <PanelGroup direction="horizontal" onLayout={onLayout} autoSaveId="persistence">
+      <PanelGroup direction="horizontal" onLayout={onLayout}>
         {/* Project Explorer / Sidebar */}
         <Panel
           defaultSize={initialLayout ? initialLayout[0] : 15}
