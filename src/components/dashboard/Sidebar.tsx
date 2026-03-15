@@ -1,4 +1,3 @@
-
 "use client"
 
 import React from "react"
@@ -18,11 +17,11 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }: SidebarItemProps) =
     className={cn(
       "flex items-center gap-3 px-3 py-1.5 w-full text-[13px] rounded-md transition-all duration-200 group",
       active 
-        ? "bg-orange-600/10 text-orange-400 font-medium" 
+        ? "bg-amber-600/10 text-amber-500 font-medium" 
         : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
     )}
   >
-    <Icon className={cn("w-4 h-4", active ? "text-orange-400" : "text-slate-500 group-hover:text-slate-300")} />
+    <Icon className={cn("w-4 h-4", active ? "text-amber-500" : "text-slate-500 group-hover:text-slate-300")} />
     <span>{label}</span>
   </button>
 )
@@ -31,10 +30,10 @@ export function Sidebar() {
   const [activeTab, setActiveTab] = React.useState('editor')
 
   return (
-    <aside className="h-full flex flex-col bg-slate-900 border-r border-slate-800">
+    <aside className="h-full flex flex-col bg-slate-950 border-r border-slate-800">
       <div className="p-4 border-b border-slate-800">
         <div className="flex items-center gap-2 mb-1">
-          <ShieldCheck className="text-orange-500 w-5 h-5" />
+          <ShieldCheck className="text-amber-500 w-5 h-5" />
           <h1 className="font-headline text-lg font-bold tracking-tight text-slate-100">
             CaramelPepper
           </h1>
@@ -55,10 +54,10 @@ export function Sidebar() {
           <div className="space-y-0.5">
             <div className="flex items-center gap-2 px-3 py-1 text-[13px] text-slate-400">
               <ChevronDown className="w-3 h-3" />
-              <Folder className="w-3.5 h-3.5 text-orange-500/50" />
+              <Folder className="w-3.5 h-3.5 text-amber-500/50" />
               <span>src</span>
             </div>
-            <div className="ml-6 flex items-center gap-2 px-3 py-1 text-[13px] text-orange-400 bg-orange-400/5 rounded-sm border-l border-orange-400">
+            <div className="ml-6 flex items-center gap-2 px-3 py-1 text-[13px] text-amber-500 bg-amber-500/5 rounded-sm border-l border-amber-500">
               <FileCode className="w-3.5 h-3.5" />
               <span>scratchpad.ts</span>
             </div>
@@ -76,10 +75,10 @@ export function Sidebar() {
         </nav>
       </div>
 
-      <div className="p-4 border-t border-slate-800 bg-slate-900/80">
+      <div className="p-4 border-t border-slate-800 bg-slate-950">
         <SidebarItem icon={Settings} label="Settings" onClick={() => {}} />
-        <div className="mt-4 flex items-center gap-3 px-3 py-2 bg-slate-800/50 rounded-lg border border-slate-700/50">
-          <div className="w-7 h-7 rounded-full bg-orange-600 flex items-center justify-center text-[10px] font-bold text-white shadow-lg shadow-orange-900/20">
+        <div className="mt-4 flex items-center gap-3 px-3 py-2 bg-slate-900 rounded-lg border border-slate-800">
+          <div className="w-7 h-7 rounded-full bg-amber-600 flex items-center justify-center text-[10px] font-bold text-slate-900 shadow-lg shadow-amber-900/20">
             CP
           </div>
           <div className="flex flex-col">

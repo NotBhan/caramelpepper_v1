@@ -1,4 +1,3 @@
-
 "use client"
 
 import React from "react"
@@ -103,7 +102,7 @@ function ResizeHandle({
   return (
     <PanelResizeHandle
       className={cn(
-        "relative flex items-center justify-center bg-slate-800 transition-colors hover:bg-orange-500/50 group",
+        "relative flex items-center justify-center bg-slate-800 transition-colors hover:bg-amber-500/50 group",
         direction === "vertical" ? "w-1 cursor-col-resize" : "h-1 cursor-row-resize",
         className
       )}

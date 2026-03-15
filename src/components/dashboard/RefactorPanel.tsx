@@ -1,11 +1,9 @@
-
 "use client"
 
 import React from "react"
-import { Wand2, Check, X, MessageSquareCode, Sparkles, Terminal } from "lucide-react"
+import { Wand2, Check, MessageSquareCode, Terminal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Badge } from "@/components/ui/badge"
 import { type LocalCodeRefactoringOutput } from "@/ai/flows/local-code-refactoring"
 
 interface RefactorPanelProps {
@@ -19,8 +17,8 @@ export function RefactorPanel({ suggestions, isRefactoring, onApply }: RefactorP
     return (
       <div className="h-full flex flex-col items-center justify-center space-y-3 bg-slate-950">
         <div className="relative">
-          <Wand2 className="w-8 h-8 text-orange-500 animate-pulse" />
-          <div className="absolute inset-0 bg-orange-500 blur-xl opacity-20 animate-pulse" />
+          <Wand2 className="w-8 h-8 text-amber-500 animate-pulse" />
+          <div className="absolute inset-0 bg-amber-500 blur-xl opacity-20 animate-pulse" />
         </div>
         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">AI Refactoring Engine Active</p>
       </div>
@@ -43,7 +41,7 @@ export function RefactorPanel({ suggestions, isRefactoring, onApply }: RefactorP
     <div className="h-full flex flex-col bg-slate-950 border-t border-slate-800">
       <div className="px-4 py-2 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
         <div className="flex items-center gap-2">
-          <MessageSquareCode className="w-4 h-4 text-orange-500" />
+          <MessageSquareCode className="w-4 h-4 text-amber-500" />
           <h3 className="text-xs font-bold text-slate-200">Refactoring Strategy</h3>
         </div>
         <div className="flex gap-2">
@@ -51,7 +49,7 @@ export function RefactorPanel({ suggestions, isRefactoring, onApply }: RefactorP
             <Button 
               size="sm" 
               onClick={() => onApply(suggestions.refactoredCode)}
-              className="h-7 px-3 text-[10px] bg-orange-600 text-white hover:bg-orange-500"
+              className="h-7 px-3 text-[10px] bg-amber-600 text-slate-900 font-bold hover:bg-amber-500"
             >
               <Check className="w-3 h-3 mr-1" /> Commit Changes
             </Button>
@@ -75,7 +73,7 @@ export function RefactorPanel({ suggestions, isRefactoring, onApply }: RefactorP
           <div className="p-4 space-y-3">
             <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Optimization Tasks</h4>
             {suggestions.suggestions.map((suggestion, i) => (
-              <div key={i} className="group p-2.5 rounded-md bg-slate-900 border border-slate-800 hover:border-orange-500/30 transition-colors flex gap-3">
+              <div key={i} className="group p-2.5 rounded-md bg-slate-900 border border-slate-800 hover:border-amber-500/30 transition-colors flex gap-3">
                 <div className="w-5 h-5 rounded bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700">
                   <span className="text-[10px] font-bold text-slate-400">{i + 1}</span>
                 </div>

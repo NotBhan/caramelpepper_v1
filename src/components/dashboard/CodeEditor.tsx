@@ -1,11 +1,9 @@
-
 "use client"
 
 import React from "react"
 import Editor from "@monaco-editor/react"
 import { Copy, Trash2, FileJson, Layers } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 
 interface CodeEditorProps {
@@ -28,10 +26,10 @@ export function CodeEditor({
   const lineCount = value.split('\n').length;
 
   return (
-    <div className="flex flex-col h-full bg-[#1e1e1e] border-r border-slate-800">
+    <div className="flex flex-col h-full bg-[#0f172a] border-r border-slate-800">
       <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/80">
         <div className="flex items-center gap-2">
-          <FileJson className="w-4 h-4 text-orange-400" />
+          <FileJson className="w-4 h-4 text-amber-500" />
           <span className="text-xs font-medium font-headline text-slate-300">{title}</span>
         </div>
         {!isReadOnly && (
@@ -39,14 +37,14 @@ export function CodeEditor({
             <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-white">
               <Copy className="w-3 h-3" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive/70 hover:text-destructive hover:bg-destructive/10">
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500/70 hover:text-red-500 hover:bg-red-500/10">
               <Trash2 className="w-3 h-3" />
             </Button>
             <Button 
               onClick={onAnalyze} 
               disabled={isAnalyzing}
               size="sm" 
-              className="h-8 gap-2 bg-orange-600 hover:bg-orange-500 text-white shadow-lg shadow-orange-900/20"
+              className="h-8 gap-2 bg-amber-600 hover:bg-amber-500 text-slate-900 font-bold shadow-lg shadow-amber-900/20"
             >
               <Layers className={cn("w-3 h-3", isAnalyzing && "animate-spin")} />
               {isAnalyzing ? "Processing..." : "Analyze"}
@@ -70,7 +68,9 @@ export function CodeEditor({
             scrollBeyondLastLine: false,
             automaticLayout: true,
             padding: { top: 16 },
-            fontFamily: 'Source Code Pro, monospace'
+            fontFamily: 'Source Code Pro, monospace',
+            wordWrap: 'on',
+            backgroundColor: '#0f172a'
           }}
         />
       </div>
@@ -82,7 +82,7 @@ export function CodeEditor({
           <span>TypeScript</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full bg-green-500/50" />
+          <div className="w-2 h-2 rounded-full bg-amber-500/50" />
           <span>LSP Active</span>
         </div>
       </div>
