@@ -1,10 +1,9 @@
-
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
 import { type ComplexityMetrics, calculateComplexity } from "@/lib/complexity"
 
-export type InferenceProvider = 'local' | 'anthropic' | 'openai' | 'gemini'; // [UPDATE]: Added gemini to supported provider types
+export type InferenceProvider = 'local' | 'anthropic' | 'openai' | 'gemini';
 
 export interface AppState {
   code: string;
@@ -18,7 +17,6 @@ export interface AppState {
 
 export function useAppStore(initialCode: string) {
   const [state, setState] = useState<AppState>(() => {
-    // Initial state with defaults
     return {
       code: initialCode,
       isDiffOpen: false,
@@ -30,7 +28,6 @@ export function useAppStore(initialCode: string) {
     };
   });
 
-  // Load persistence on mount
   useEffect(() => {
     const savedProvider = localStorage.getItem('cp_inference_provider') as InferenceProvider;
     const savedKeys = localStorage.getItem('cp_api_keys');
@@ -46,14 +43,14 @@ export function useAppStore(initialCode: string) {
 
   const setInferenceProvider = useCallback((provider: InferenceProvider) => {
     setState(prev => {
-      localStorage.setItem('cp_inference_provider', provider); // [UPDATE]: Persisted provider preference to localStorage
+      localStorage.setItem('cp_inference_provider', provider);
       return { ...prev, inferenceProvider: provider };
     });
   }, []);
 
   const setApiKey = useCallback((provider: string, key: string) => {
     setState(prev => {
-      const newKeys = { ...prev.apiKeys, [provider]: key }; // [UPDATE]: Merged new API key into the key-vault record
+      const newKeys = { ...prev.apiKeys, [provider]: key };
       localStorage.setItem('cp_api_keys', JSON.stringify(newKeys));
       return { ...prev, apiKeys: newKeys };
     });

@@ -1,4 +1,3 @@
-
 #include "ai/prompt_templates.hpp"
 #include "ai/InferenceFactory.hpp"
 #include <memory>
@@ -28,11 +27,11 @@ std::string handleRefactorRequest(const RefactorRequest& req) {
     );
 
     // 2. Instantiate the appropriate engine via the Factory
-    auto engine = CaramelPepper::AI::InferenceFactory::create(req.engineType, req.apiKey); // [UPDATE]: Refactored to use static factory pattern
+    auto engine = CaramelPepper::AI::InferenceFactory::create(req.engineType, req.apiKey);
 
     // 3. Perform inference and return result
     if (engine) {
-        return engine->generateRefactor(prompt); // [UPDATE]: Delegated refactor logic to factory-created engine
+        return engine->generateRefactor(prompt);
     }
 
     return "ERROR: Engine instantiation failed.";

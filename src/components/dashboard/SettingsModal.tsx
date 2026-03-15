@@ -1,4 +1,3 @@
-
 "use client"
 
 import React from "react"
@@ -65,7 +64,7 @@ export function SettingsModal({
                 <SelectItem value="local">Local (llama.cpp)</SelectItem>
                 <SelectItem value="anthropic">Anthropic (Claude)</SelectItem>
                 <SelectItem value="openai">OpenAI (GPT-4)</SelectItem>
-                <SelectItem value="gemini">Google (Gemini)</SelectItem> // [UPDATE]: Added Gemini to provider selection list
+                <SelectItem value="gemini">Google (Gemini)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -80,7 +79,7 @@ export function SettingsModal({
                 type="password"
                 placeholder="Enter API Key"
                 value={apiKeys[provider] || ""}
-                onChange={(e) => onApiKeyChange(provider, e.target.value)} // [UPDATE]: Bound API key input to selected provider state
+                onChange={(e) => onApiKeyChange(provider, e.target.value)}
                 className="bg-slate-950 border-slate-800 focus:ring-amber-500"
               />
               <p className="text-[10px] text-slate-500 flex items-center gap-1 mt-1">

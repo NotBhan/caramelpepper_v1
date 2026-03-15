@@ -34,7 +34,7 @@ inline std::string buildPrompt(
         << "### MANDATORY BEHAVIORAL CONSTRAINTS ###\n"
         << "1. CODE ONLY: Output ONLY valid source code. No conversational text, no markdown code blocks (e.g., no ```cpp), and no preamble/postamble.\n"
         << "2. VERTICAL PACING: You MUST maintain the exact vertical pacing of the original code. Do not remove empty lines, and preserve all original paragraphing and structural spacing.\n"
-        << "3. LINE MARKING: For every single line modified or optimized, append an inline comment at the exact end of that line using the format: `// [REFACTORED]: <brief reason>`. Do not touch lines that do not need optimization.\n\n"
+        << "3. LINE MARKING: For every single line modified or optimized, append an inline comment at the exact end of that line using the format: `// [UPDATE]: <reason>`. Do not touch lines that do not need optimization.\n\n"
         << "### PROJECT STYLE RULES ###\n"
         << styleRules << "\n\n"
         << "### REPOSITORY CONTEXT (RAG) ###\n"

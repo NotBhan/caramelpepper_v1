@@ -1,4 +1,3 @@
-
 "use client"
 
 import React from "react"
@@ -46,7 +45,7 @@ export function DiffViewer({
       <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/80">
         <div className="flex items-center gap-3">
           <Badge variant="outline" className="border-amber-500/30 text-amber-500 bg-amber-500/5 font-mono text-[10px]">
-            PROPOSED_REFACTOR.TS // [UPDATE]: Integrated proposed file identifier for clarity
+            PROPOSED_REFACTOR.TS
           </Badge>
           
           {cyc && (
@@ -96,13 +95,12 @@ export function DiffViewer({
             automaticLayout: true,
             padding: { top: 16 },
             fontFamily: 'Source Code Pro, monospace',
-            wordWrap: 'on', // [UPDATE]: Enabled word wrapping for comparative analysis
+            wordWrap: 'on',
             backgroundColor: '#0f172a'
           }}
         />
       </div>
 
-      {/* Floating Insight Bar */}
       {proposedMetrics && proposedMetrics.risk === 'low' && originalMetrics && originalMetrics.risk !== 'low' && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20 backdrop-blur-md flex items-center gap-3 shadow-2xl">
           <AlertCircle className="w-4 h-4 text-green-500" />

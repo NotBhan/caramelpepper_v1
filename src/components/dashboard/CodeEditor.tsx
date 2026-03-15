@@ -44,7 +44,7 @@ export function CodeEditor({
               onClick={onAnalyze} 
               disabled={isAnalyzing}
               size="sm" 
-              className="h-8 gap-2 bg-amber-600 hover:bg-amber-500 text-slate-900 font-bold shadow-lg shadow-amber-900/20" // [UPDATE]: Applied 'Warm Caramel' accent for primary analysis action
+              className="h-8 gap-2 bg-amber-600 hover:bg-amber-500 text-slate-900 font-bold shadow-lg shadow-amber-900/20"
             >
               <Layers className={cn("w-3 h-3", isAnalyzing && "animate-spin")} />
               {isAnalyzing ? "Processing..." : "Analyze"}
@@ -69,8 +69,8 @@ export function CodeEditor({
             automaticLayout: true,
             padding: { top: 16 },
             fontFamily: 'Source Code Pro, monospace',
-            wordWrap: 'on', // [UPDATE]: Enabled word wrapping to optimize code viewing in split-pane layout
-            backgroundColor: '#0f172a' // [UPDATE]: Enforced consistent Deep Slate background for Monaco editor surface
+            wordWrap: 'on',
+            backgroundColor: '#0f172a'
           }}
         />
       </div>
