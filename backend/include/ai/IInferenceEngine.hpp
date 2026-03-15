@@ -17,12 +17,12 @@ public:
     /**
      * Generates a refactored version of the provided code based on a formatted prompt.
      * @param prompt The complete system + user prompt constructed by the orchestrator.
-     * @return A string containing only the optimized source code.
+     * @return A string containing only the optimized source code or an "ERROR: ..." message.
      */
     virtual std::string generateRefactor(std::string_view prompt) = 0;
 
     /**
-     * Returns a human-readable identifier for the engine (e.g., "Llama-3-8B", "Claude-3.5-Sonnet").
+     * Returns a human-readable identifier for the engine.
      */
     virtual std::string getEngineName() const = 0;
 };

@@ -4,7 +4,7 @@
 import { useState, useCallback, useEffect } from "react"
 import { type ComplexityMetrics, calculateComplexity } from "@/lib/complexity"
 
-export type InferenceProvider = 'local' | 'anthropic' | 'openai';
+export type InferenceProvider = 'local' | 'anthropic' | 'openai' | 'gemini'; // [UPDATE]: Added gemini to supported provider types
 
 export interface AppState {
   code: string;
@@ -46,14 +46,14 @@ export function useAppStore(initialCode: string) {
 
   const setInferenceProvider = useCallback((provider: InferenceProvider) => {
     setState(prev => {
-      localStorage.setItem('cp_inference_provider', provider);
+      localStorage.setItem('cp_inference_provider', provider); // [UPDATE]: Persisted provider preference to localStorage
       return { ...prev, inferenceProvider: provider };
     });
   }, []);
 
   const setApiKey = useCallback((provider: string, key: string) => {
     setState(prev => {
-      const newKeys = { ...prev.apiKeys, [provider]: key };
+      const newKeys = { ...prev.apiKeys, [provider]: key }; // [UPDATE]: Merged new API key into the key-vault record
       localStorage.setItem('cp_api_keys', JSON.stringify(newKeys));
       return { ...prev, apiKeys: newKeys };
     });
