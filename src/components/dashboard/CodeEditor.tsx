@@ -24,6 +24,27 @@ export function CodeEditor({
   isReadOnly = false
 }: CodeEditorProps) {
   const lineCount = value.split('\n').length;
+  const editorRef = React.useRef<any>(null);
+  const monacoRef = React.useRef<any>(null);
+
+  const handleEditorDidMount = (editor: any, monaco: any) => {
+    editorRef.current = editor;
+    monacoRef.current = monaco;
+  };
+
+  React.useEffect(() => {
+    return () => {
+      if (editorRef.current) {
+        // Explicitly dispose of the editor to clear pending internal Monaco timeouts/hovers
+        editorRef.current.dispose();
+      }
+      if (monacoRef.current) {
+        // Dispose of models associated with this editor to prevent memory leaks
+        const models = monacoRef.current.editor.getModels();
+        models.forEach((model: any) => model.dispose());
+      }
+    };
+  }, []);
 
   return (
     <div className="flex flex-col h-full bg-[#1e1e1e] border-r border-[#3c3c3c]">
@@ -60,6 +81,7 @@ export function CodeEditor({
           theme="vs-dark"
           value={value}
           onChange={(val) => onChange(val || "")}
+          onMount={handleEditorDidMount}
           options={{
             readOnly: isReadOnly,
             fontSize: 13,

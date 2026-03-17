@@ -26,20 +26,33 @@ export function DiffViewer({
   onReject
 }: DiffViewerProps) {
   const editorRef = React.useRef<any>(null);
+  const monacoRef = React.useRef<any>(null);
 
   const [modelPaths] = React.useState(() => ({
     original: `file:///original-${Math.random().toString(36).slice(2, 9)}.ts`,
     modified: `file:///modified-${Math.random().toString(36).slice(2, 9)}.ts`
   }));
 
-  const handleEditorDidMount = (editor: any) => {
+  const handleEditorDidMount = (editor: any, monaco: any) => {
     editorRef.current = editor;
+    monacoRef.current = monaco;
   };
 
   React.useEffect(() => {
     return () => {
       if (editorRef.current) {
-        editorRef.current.setModel(null);
+        // Synchronously kill all internal Monaco timeouts, hover services, and workers
+        editorRef.current.dispose();
+      }
+      if (monacoRef.current) {
+        // Prevent memory leaks by disposing of associated text models
+        const models = monacoRef.current.editor.getModels();
+        models.forEach((model: any) => {
+          if (model.uri.toString().includes('file:///original-') || 
+              model.uri.toString().includes('file:///modified-')) {
+            model.dispose();
+          }
+        });
       }
     };
   }, []);
