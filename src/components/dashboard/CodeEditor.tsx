@@ -26,15 +26,15 @@ export function CodeEditor({
   const lineCount = value.split('\n').length;
 
   return (
-    <div className="flex flex-col h-full bg-[#0f172a] border-r border-slate-800">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/80">
+    <div className="flex flex-col h-full bg-[#1e1e1e] border-r border-[#3c3c3c]">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-[#3c3c3c] bg-[#252526]">
         <div className="flex items-center gap-2">
-          <FileJson className="w-4 h-4 text-amber-500" />
-          <span className="text-xs font-medium font-headline text-slate-300">{title}</span>
+          <FileJson className="w-4 h-4 text-[#007acc]" />
+          <span className="text-[12px] font-medium text-[#cccccc]">{title}</span>
         </div>
         {!isReadOnly && (
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-white">
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-[#cccccc] hover:text-[#ffffff] hover:bg-[#2a2d2e]">
               <Copy className="w-3 h-3" />
             </Button>
             <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500/70 hover:text-red-500 hover:bg-red-500/10">
@@ -44,7 +44,7 @@ export function CodeEditor({
               onClick={onAnalyze} 
               disabled={isAnalyzing}
               size="sm" 
-              className="h-8 gap-2 bg-amber-600 hover:bg-amber-500 text-slate-900 font-bold shadow-lg shadow-amber-900/20"
+              className="h-8 gap-2 bg-[#007acc] hover:bg-[#0062a3] text-[#ffffff] font-bold"
             >
               <Layers className={cn("w-3 h-3", isAnalyzing && "animate-spin")} />
               {isAnalyzing ? "Processing..." : "Optimize"}
@@ -70,19 +70,19 @@ export function CodeEditor({
             padding: { top: 16 },
             fontFamily: 'Source Code Pro, monospace',
             wordWrap: 'on',
-            backgroundColor: '#0f172a'
+            backgroundColor: '#1e1e1e'
           }}
         />
       </div>
 
-      <div className="px-4 py-1 border-t border-slate-800 bg-slate-900/50 flex justify-between items-center text-[10px] text-slate-500">
+      <div className="px-4 py-1 border-t border-[#3c3c3c] bg-[#252526] flex justify-between items-center text-[10px] text-[#858585]">
         <div className="flex gap-4">
           <span>Lines: {lineCount}</span>
           <span>UTF-8</span>
           <span>TypeScript</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full bg-amber-500/50" />
+          <div className="w-2 h-2 rounded-full bg-[#007acc]" />
           <span>LSP Active</span>
         </div>
       </div>

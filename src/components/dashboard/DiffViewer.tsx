@@ -68,7 +68,7 @@ export function DiffViewer({
     padding: { top: 16 },
     fontFamily: 'Source Code Pro, monospace',
     wordWrap: 'on' as const,
-    backgroundColor: '#0f172a',
+    backgroundColor: '#1e1e1e',
     folding: true,
     lineNumbers: 'on' as const,
     originalEditable: false,
@@ -76,17 +76,17 @@ export function DiffViewer({
   }), []);
 
   return (
-    <div className="flex flex-col h-full bg-[#0f172a] relative">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/80">
+    <div className="flex flex-col h-full bg-[#1e1e1e] relative">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-[#3c3c3c] bg-[#252526]">
         <div className="flex items-center gap-3">
-          <Badge variant="outline" className="border-amber-500/30 text-amber-500 bg-amber-500/5 font-mono text-[10px]">
+          <Badge variant="outline" className="border-[#007acc]/30 text-[#007acc] bg-[#007acc]/5 font-mono text-[10px]">
             PROPOSED_REFACTOR.TS
           </Badge>
           
           {cyc && (
-            <div className="flex items-center gap-2 px-2 py-0.5 rounded bg-slate-800/50 border border-slate-700">
-              <span className="text-[10px] text-slate-500 uppercase font-bold">Complexity</span>
-              <span className="text-[11px] font-mono text-slate-300">
+            <div className="flex items-center gap-2 px-2 py-0.5 rounded bg-[#2a2d2e] border border-[#3c3c3c]">
+              <span className="text-[10px] text-[#858585] uppercase font-bold">Complexity</span>
+              <span className="text-[11px] font-mono text-[#cccccc]">
                 {originalMetrics?.cyclomatic} → {proposedMetrics?.cyclomatic}
               </span>
               <cyc.icon className={cn("w-3 h-3", cyc.color)} />
@@ -99,7 +99,7 @@ export function DiffViewer({
             variant="ghost" 
             size="sm" 
             onClick={onReject}
-            className="h-8 gap-2 text-slate-400 hover:text-red-400 hover:bg-red-400/10"
+            className="h-8 gap-2 text-[#cccccc] hover:text-red-400 hover:bg-red-400/10"
           >
             <X className="w-3.5 h-3.5" />
             Discard
@@ -107,7 +107,7 @@ export function DiffViewer({
           <Button 
             size="sm" 
             onClick={onAccept}
-            className="h-8 gap-2 bg-green-600 hover:bg-green-500 text-slate-900 font-bold shadow-lg shadow-green-900/20"
+            className="h-8 gap-2 bg-green-700 hover:bg-green-600 text-[#ffffff] font-bold"
           >
             <Check className="w-3.5 h-3.5" />
             Accept Changes
@@ -130,7 +130,7 @@ export function DiffViewer({
       </div>
 
       {proposedMetrics && proposedMetrics.risk === 'low' && originalMetrics && originalMetrics.risk !== 'low' && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20 backdrop-blur-md flex items-center gap-3 shadow-2xl">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-sm bg-green-500/10 border border-green-500/20 backdrop-blur-md flex items-center gap-3 shadow-2xl">
           <AlertCircle className="w-4 h-4 text-green-500" />
           <span className="text-xs font-bold text-green-400 uppercase tracking-tight">
             Significant Risk Reduction Detected

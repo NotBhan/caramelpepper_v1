@@ -1,4 +1,3 @@
-
 "use client"
 
 import React from "react"
@@ -36,18 +35,18 @@ export function WorkspaceLayout({
   }
 
   if (!isMounted) {
-    return <div className="h-screen w-screen bg-slate-950" />
+    return <div className="h-screen w-screen bg-[#1e1e1e]" />
   }
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-slate-950 text-slate-50 flex flex-col">
+    <div className="h-screen w-screen overflow-hidden bg-[#1e1e1e] text-[#cccccc] flex flex-col">
       <PanelGroup direction="horizontal" onLayout={onLayout}>
         {/* Project Explorer / Sidebar */}
         <Panel
           defaultSize={15}
           minSize={10}
           maxSize={25}
-          className="bg-slate-900/50"
+          className="bg-[#252526]"
         >
           {sidebar}
         </Panel>
@@ -113,13 +112,13 @@ function ResizeHandle({
   return (
     <PanelResizeHandle
       className={cn(
-        "relative flex items-center justify-center bg-slate-800 transition-colors hover:bg-amber-500/50 group",
-        direction === "vertical" ? "w-1 cursor-col-resize" : "h-1 cursor-row-resize",
+        "relative flex items-center justify-center bg-[#1e1e1e] transition-colors hover:bg-[#007acc]/50 group",
+        direction === "vertical" ? "w-1 cursor-col-resize border-l border-[#3c3c3c]" : "h-1 cursor-row-resize border-t border-[#3c3c3c]",
         className
       )}
     >
       <div className={cn(
-        "bg-slate-700 group-hover:bg-white/50 transition-colors",
+        "bg-[#3c3c3c] group-hover:bg-[#ffffff]/50 transition-colors",
         direction === "vertical" ? "h-8 w-[1px]" : "w-8 h-[1px]"
       )} />
     </PanelResizeHandle>

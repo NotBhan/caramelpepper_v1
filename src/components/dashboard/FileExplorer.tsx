@@ -1,4 +1,3 @@
-
 "use client"
 
 import React from "react"
@@ -53,24 +52,24 @@ function FileExplorerItem({ item, activePath, onFileClick, depth }: FileExplorer
         onClick={handleToggle}
         style={{ paddingLeft: `${depth * 12 + 12}px` }}
         className={cn(
-          "flex items-center gap-2 py-1 w-full text-[13px] transition-colors group",
+          "flex items-center gap-2 py-0.5 w-full text-[13px] transition-colors group",
           isActive 
-            ? "bg-slate-800 text-amber-500 font-medium" 
-            : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
+            ? "bg-[#37373d] text-[#ffffff] font-medium" 
+            : "text-[#cccccc] hover:bg-[#2a2d2e] hover:text-[#ffffff]"
         )}
       >
         <span className="shrink-0">
           {item.is_dir ? (
-            isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />
+            isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />
           ) : (
-            <div className="w-3" />
+            <div className="w-3.5" />
           )}
         </span>
         
         {item.is_dir ? (
-          <Folder className={cn("w-3.5 h-3.5", isActive ? "text-amber-500" : "text-amber-500/60")} />
+          <Folder className={cn("w-4 h-4", isActive ? "text-[#007acc]" : "text-[#cccccc]/70")} />
         ) : (
-          <FileCode className={cn("w-3.5 h-3.5", isActive ? "text-amber-500" : "text-slate-500")} />
+          <FileCode className={cn("w-4 h-4", isActive ? "text-[#007acc]" : "text-[#858585]")} />
         )}
         
         <span className="truncate">{item.name}</span>

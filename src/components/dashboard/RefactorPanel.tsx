@@ -15,41 +15,41 @@ interface RefactorPanelProps {
 export function RefactorPanel({ suggestions, isRefactoring, onApply }: RefactorPanelProps) {
   if (isRefactoring) {
     return (
-      <div className="h-full flex flex-col items-center justify-center space-y-3 bg-slate-950">
+      <div className="h-full flex flex-col items-center justify-center space-y-3 bg-[#1e1e1e]">
         <div className="relative">
-          <Wand2 className="w-8 h-8 text-amber-500 animate-pulse" />
-          <div className="absolute inset-0 bg-amber-500 blur-xl opacity-20 animate-pulse" />
+          <Wand2 className="w-8 h-8 text-[#007acc] animate-pulse" />
+          <div className="absolute inset-0 bg-[#007acc] blur-xl opacity-20 animate-pulse" />
         </div>
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">AI Refactoring Engine Active</p>
+        <p className="text-xs font-bold text-[#858585] uppercase tracking-widest">AI Refactoring Engine Active</p>
       </div>
     )
   }
 
   if (!suggestions) {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-center bg-slate-950 border-t border-slate-800">
-        <div className="flex items-center gap-2 text-slate-600 mb-2">
+      <div className="h-full flex flex-col items-center justify-center text-center bg-[#1e1e1e] border-t border-[#3c3c3c]">
+        <div className="flex items-center gap-2 text-[#858585] mb-2">
           <Terminal className="w-4 h-4" />
           <span className="text-[10px] font-mono">pepper-shell v1.0</span>
         </div>
-        <p className="text-xs text-slate-500">Run an analysis to generate refactoring suggestions.</p>
+        <p className="text-xs text-[#858585]">Run an analysis to generate refactoring suggestions.</p>
       </div>
     )
   }
 
   return (
-    <div className="h-full flex flex-col bg-slate-950 border-t border-slate-800">
-      <div className="px-4 py-2 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
+    <div className="h-full flex flex-col bg-[#1e1e1e] border-t border-[#3c3c3c]">
+      <div className="px-4 py-2 border-b border-[#3c3c3c] flex items-center justify-between bg-[#252526]">
         <div className="flex items-center gap-2">
-          <MessageSquareCode className="w-4 h-4 text-amber-500" />
-          <h3 className="text-xs font-bold text-slate-200">Refactoring Strategy</h3>
+          <MessageSquareCode className="w-4 h-4 text-[#007acc]" />
+          <h3 className="text-xs font-bold text-[#ffffff]">Refactoring Strategy</h3>
         </div>
         <div className="flex gap-2">
           {suggestions.refactoredCode && (
             <Button 
               size="sm" 
               onClick={() => onApply(suggestions.refactoredCode)}
-              className="h-7 px-3 text-[10px] bg-amber-600 text-slate-900 font-bold hover:bg-amber-500"
+              className="h-7 px-3 text-[10px] bg-[#007acc] text-[#ffffff] font-bold hover:bg-[#0062a3]"
             >
               <Check className="w-3 h-3 mr-1" /> Commit Changes
             </Button>
@@ -58,11 +58,11 @@ export function RefactorPanel({ suggestions, isRefactoring, onApply }: RefactorP
       </div>
 
       <div className="flex-1 flex min-h-0 overflow-hidden">
-        <ScrollArea className="flex-1 border-r border-slate-800">
+        <ScrollArea className="flex-1 border-r border-[#3c3c3c]">
           <div className="p-4 space-y-4">
             <div className="space-y-2">
-              <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Linguistic Analysis</h4>
-              <p className="text-[13px] leading-relaxed text-slate-300 font-mono italic">
+              <h4 className="text-[10px] font-bold text-[#858585] uppercase tracking-wider">Linguistic Analysis</h4>
+              <p className="text-[13px] leading-relaxed text-[#cccccc] font-mono italic">
                 {suggestions.complexityAnalysis}
               </p>
             </div>
@@ -71,13 +71,13 @@ export function RefactorPanel({ suggestions, isRefactoring, onApply }: RefactorP
         
         <ScrollArea className="flex-1">
           <div className="p-4 space-y-3">
-            <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Optimization Tasks</h4>
+            <h4 className="text-[10px] font-bold text-[#858585] uppercase tracking-wider">Optimization Tasks</h4>
             {suggestions.suggestions.map((suggestion, i) => (
-              <div key={i} className="group p-2.5 rounded-md bg-slate-900 border border-slate-800 hover:border-amber-500/30 transition-colors flex gap-3">
-                <div className="w-5 h-5 rounded bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700">
-                  <span className="text-[10px] font-bold text-slate-400">{i + 1}</span>
+              <div key={i} className="group p-2.5 rounded-sm bg-[#252526] border border-[#3c3c3c] hover:border-[#007acc]/30 transition-colors flex gap-3">
+                <div className="w-5 h-5 rounded-sm bg-[#1e1e1e] flex items-center justify-center shrink-0 border border-[#3c3c3c]">
+                  <span className="text-[10px] font-bold text-[#858585]">{i + 1}</span>
                 </div>
-                <p className="text-[12px] leading-snug text-slate-300 flex-1">{suggestion}</p>
+                <p className="text-[12px] leading-snug text-[#cccccc] flex-1">{suggestion}</p>
               </div>
             ))}
           </div>
