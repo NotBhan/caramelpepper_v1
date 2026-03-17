@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from "react"
@@ -25,6 +26,13 @@ export function DiffViewer({
   onAccept,
   onReject
 }: DiffViewerProps) {
+  // Use unique paths for each mount to prevent model collisions during rapid unmounting/remounting.
+  // We use useState with an initializer to ensure these paths are stable for the life of this component instance.
+  const [modelPaths] = React.useState(() => ({
+    original: `file:///original-${Math.random().toString(36).slice(2, 9)}.ts`,
+    modified: `file:///modified-${Math.random().toString(36).slice(2, 9)}.ts`
+  }));
+
   const getImprovement = (key: keyof Pick<ComplexityMetrics, 'cyclomatic' | 'cognitive'>) => {
     if (!originalMetrics || !proposedMetrics) return null;
     const diff = originalMetrics[key] - proposedMetrics[key];
@@ -38,7 +46,6 @@ export function DiffViewer({
   };
 
   const cyc = getImprovement('cyclomatic');
-  const cog = getImprovement('cognitive');
 
   // Stable options to prevent unnecessary re-renders of the editor widget
   const editorOptions = React.useMemo(() => ({
@@ -54,6 +61,9 @@ export function DiffViewer({
     backgroundColor: '#0f172a',
     folding: true,
     lineNumbers: 'on' as const,
+    // Explicitly set properties that can prevent disposal race conditions
+    originalEditable: false,
+    diffCodeLens: false,
   }), []);
 
   return (
@@ -98,14 +108,15 @@ export function DiffViewer({
 
       <div className="flex-1 min-h-0">
         <DiffEditor
+          height="100%"
           original={original}
           modified={modified}
           language="typescript"
           theme="vs-dark"
           options={editorOptions}
           // Using unique model paths helps Monaco manage internal buffers during unmounting
-          originalModelPath="file:///original-source.ts"
-          modifiedModelPath="file:///refactored-source.ts"
+          originalModelPath={modelPaths.original}
+          modifiedModelPath={modelPaths.modified}
         />
       </div>
 
