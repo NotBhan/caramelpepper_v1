@@ -45,69 +45,75 @@ export function WorkspacePickerModal({ isOpen, onSelect, onSkip }: WorkspacePick
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-[480px] bg-[#252526] border-[#3c3c3c] text-[#cccccc]">
-        <DialogHeader>
-          <div className="flex items-center gap-2 mb-2">
-            <FolderOpen className="w-5 h-5 text-[#007acc]" />
-            <DialogTitle className="font-headline text-xl text-[#ffffff]">Select Workspace</DialogTitle>
+      <DialogContent className="sm:max-w-[560px] bg-[#252526] border-[#3c3c3c] text-[#cccccc] p-0 overflow-hidden">
+        <div className="p-6 pb-0">
+          <DialogHeader>
+            <div className="flex items-center gap-2 mb-2">
+              <FolderOpen className="w-5 h-5 text-[#007acc]" />
+              <DialogTitle className="font-headline text-xl text-[#ffffff]">Select Workspace</DialogTitle>
+            </div>
+            <DialogDescription className="text-[#858585] text-xs leading-relaxed">
+              Browser-based file pickers are restricted in this environment. Please provide the absolute path to your project directory.
+            </DialogDescription>
+          </DialogHeader>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="px-6 py-4 space-y-4">
+            <div className="space-y-3">
+              <Label htmlFor="path" className="text-[10px] font-bold uppercase tracking-widest text-[#858585] flex items-center gap-2">
+                <MapPin className="w-3.5 h-3.5" />
+                Absolute Project Path
+              </Label>
+              <Input
+                id="path"
+                placeholder="e.g., C:/Projects/App or /home/user/app"
+                value={path}
+                onChange={(e) => setPath(e.target.value)}
+                className="bg-[#1e1e1e] border-[#3c3c3c] focus:ring-[#007acc] h-10 text-[#ffffff] font-mono text-sm"
+                autoFocus
+              />
+              <p className="text-[11px] text-[#858585]">
+                Example for Firebase Studio: <code className="bg-[#1e1e1e] px-1.5 py-0.5 rounded text-[#cccccc] border border-[#3c3c3c]">/home/user/project</code>
+              </p>
+            </div>
+
+            {error && (
+              <Alert variant="destructive" className="bg-red-500/10 border-red-500/20 text-red-400 py-2">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  {error}
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
-          <DialogDescription className="text-[#858585]">
-            Browser-based file pickers are restricted in this environment. Please provide the absolute path to your project directory.
-          </DialogDescription>
-        </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 py-4">
-          <div className="space-y-3">
-            <Label htmlFor="path" className="text-xs font-bold uppercase tracking-wider text-[#858585] flex items-center gap-2">
-              <MapPin className="w-3.5 h-3.5" />
-              Absolute Project Path
-            </Label>
-            <Input
-              id="path"
-              placeholder="e.g., C:/Projects/App or /home/user/app"
-              value={path}
-              onChange={(e) => setPath(e.target.value)}
-              className="bg-[#1e1e1e] border-[#3c3c3c] focus:ring-[#007acc] h-10 text-[#ffffff]"
-              autoFocus
-            />
-            <p className="text-[11px] text-[#858585]">
-              Example for Firebase Studio: <code className="bg-[#1e1e1e] px-1 rounded text-[#cccccc]">/home/user/project</code>
-            </p>
-          </div>
-
-          {error && (
-            <Alert variant="destructive" className="bg-red-500/10 border-red-500/20 text-red-400 py-2">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="text-xs">
-                {error}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <DialogFooter className="flex flex-col gap-2 sm:flex-row">
+          <DialogFooter className="bg-[#1e1e1e] px-6 py-4 flex items-center justify-between border-t border-[#3c3c3c] gap-4">
             <Button 
               type="button"
               variant="ghost"
               onClick={onSkip}
-              className="text-[#858585] hover:text-[#ffffff] hover:bg-[#2a2d2e]"
+              className="text-[#858585] hover:text-[#ffffff] hover:bg-[#2a2d2e] text-xs h-9 px-3"
             >
               <FileX className="w-4 h-4 mr-2" />
-              Skip Workspace (Single File Mode)
+              Skip Workspace
             </Button>
-            <Button 
-              type="submit" 
-              disabled={!path.trim() || isSubmitting}
-              className="bg-[#007acc] hover:bg-[#0062a3] text-[#ffffff] font-bold"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Initializing...
-                </>
-              ) : (
-                "Load Workspace"
-              )}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                type="submit" 
+                disabled={!path.trim() || isSubmitting}
+                className="bg-[#007acc] hover:bg-[#0062a3] text-[#ffffff] font-bold h-9 px-6 min-w-[140px]"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Initializing...
+                  </>
+                ) : (
+                  "Load Workspace"
+                )}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
