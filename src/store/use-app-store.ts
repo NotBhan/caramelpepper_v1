@@ -1,9 +1,10 @@
+
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
 import { type ComplexityMetrics, calculateComplexity } from "@/lib/complexity"
 
-export type InferenceProvider = 'local' | 'anthropic' | 'openai' | 'gemini';
+export type InferenceProvider = 'local' | 'anthropic' | 'openai' | 'gemini' | 'ollama';
 
 export type FileItem = {
   name: string;
@@ -21,6 +22,7 @@ export interface AppState {
   proposedMetrics: ComplexityMetrics | null;
   inferenceProvider: InferenceProvider;
   keyStatus: Record<string, boolean>;
+  ollamaConfig: { url: string; model: string };
   fileTree: FileItem[];
   activeFilePath: string | null;
   isFetchingTree: boolean;
@@ -38,6 +40,7 @@ export function useAppStore(initialCode: string) {
       proposedMetrics: null,
       inferenceProvider: 'local',
       keyStatus: {},
+      ollamaConfig: { url: "http://127.0.0.1:11434", model: "qwen2.5-coder" },
       fileTree: [],
       activeFilePath: null,
       isFetchingTree: false,
@@ -183,10 +186,27 @@ export function useAppStore(initialCode: string) {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const response = await fetch('/api/settings/keys/status');
-        if (response.ok) {
-          const status = await response.json();
+        const [keyRes, configRes] = await Promise.all([
+          fetch('/api/settings/keys/status'),
+          fetch('/api/settings')
+        ]);
+        
+        if (keyRes.ok) {
+          const status = await keyRes.json();
           setState(prev => ({ ...prev, keyStatus: status }));
+        }
+
+        if (configRes.ok) {
+          const config = await configRes.json();
+          if (config.ollamaUrl || config.ollamaModel) {
+            setState(prev => ({
+              ...prev,
+              ollamaConfig: {
+                url: config.ollamaUrl || prev.ollamaConfig.url,
+                model: config.ollamaModel || prev.ollamaConfig.model
+              }
+            }));
+          }
         }
       } catch (e) {}
     };
@@ -220,6 +240,27 @@ export function useAppStore(initialCode: string) {
         setState(prev => ({
           ...prev,
           keyStatus: { ...prev.keyStatus, [provider]: true }
+        }));
+        return true;
+      }
+      return false;
+    } catch (err) {
+      return false;
+    }
+  }, []);
+
+  const saveOllamaConfig = useCallback(async (url: string, model: string) => {
+    try {
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ollamaUrl: url, ollamaModel: model })
+      });
+
+      if (response.ok) {
+        setState(prev => ({
+          ...prev,
+          ollamaConfig: { url, model }
         }));
         return true;
       }
@@ -276,6 +317,7 @@ export function useAppStore(initialCode: string) {
     rejectRefactor,
     setInferenceProvider,
     saveApiKey,
+    saveOllamaConfig,
     fetchWorkspaceTree,
     setWorkspaceRoot,
     resetWorkspaceRoot,

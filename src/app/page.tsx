@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from "react"
@@ -36,33 +37,61 @@ const DEFAULT_CODE = `function processData(data: any[]) {
 export default function Dashboard() {
   const store = useAppStore(DEFAULT_CODE)
   const [styleReport, setStyleReport] = React.useState<any>(null)
+  const [refactorOutput, setRefactorOutput] = React.useState<any>(null)
   const [isBusy, setIsBusy] = React.useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false)
   const { toast } = useToast()
 
   const handleAnalyze = async () => {
     setIsBusy(true)
+    setRefactorOutput(null)
     try {
+      // Style analysis remains a Genkit flow for now
       const style = await analyzeCodeStyle({ code: store.code })
       setStyleReport(style)
 
-      const refactor = await localCodeRefactoring({ 
-        code: store.code, 
-        language: 'typescript' 
-      })
+      let refactorResult;
+
+      if (store.inferenceProvider === 'ollama') {
+        // Use the new API route for Ollama
+        const response = await fetch('/api/ai/refactor', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: store.code,
+            language: 'typescript',
+            provider: 'ollama'
+          })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error || 'Ollama refactor failed');
+        }
+
+        refactorResult = await response.json();
+      } else {
+        // Use Genkit server actions for cloud/local llama.cpp
+        refactorResult = await localCodeRefactoring({ 
+          code: store.code, 
+          language: 'typescript' 
+        });
+      }
       
-      if (refactor.refactoredCode) {
-        store.openDiff(refactor.refactoredCode)
+      setRefactorOutput(refactorResult);
+
+      if (refactorResult.refactoredCode) {
+        store.openDiff(refactorResult.refactoredCode)
       }
 
       toast({
         title: "Analysis Complete",
         description: `Provider: ${store.inferenceProvider.toUpperCase()} | Risk: ${store.originalMetrics?.risk.toUpperCase()}`,
       })
-    } catch (err) {
+    } catch (err: any) {
       toast({
-        title: "Analysis Error",
-        description: "Inference engine failed. Check your vault settings.",
+        title: "Inference Error",
+        description: err.message || "Engine failed. Check your configuration.",
         variant: "destructive",
       })
     } finally {
@@ -115,9 +144,9 @@ export default function Dashboard() {
           }
           bottom={
             <RefactorPanel 
-              suggestions={null} 
+              suggestions={refactorOutput} 
               isRefactoring={isBusy}
-              onApply={() => {}}
+              onApply={store.acceptRefactor}
             />
           }
         />
@@ -135,6 +164,8 @@ export default function Dashboard() {
         onProviderChange={store.setInferenceProvider}
         keyStatus={store.keyStatus}
         onSaveKey={store.saveApiKey}
+        ollamaConfig={store.ollamaConfig}
+        onSaveOllama={store.saveOllamaConfig}
       />
       
       <Toaster />
