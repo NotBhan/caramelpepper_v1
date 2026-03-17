@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
@@ -51,7 +50,6 @@ const COMPLEX_TEST_CODE = `function handleRequest(req: any, res: any) {
     return res.status(401).send("Unauthorized");
   }
 
-  // High complexity loop
   const results = data.items.map(item => {
     if (item.valid) {
       return item.value > 10 ? item.value * 2 : item.value + 5;
@@ -105,12 +103,6 @@ export function useAppStore(initialCode: string) {
         return;
       }
 
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        setState(prev => ({ ...prev, isFetchingTree: false }));
-        return;
-      }
-
       const data = await response.json();
       setState(prev => ({ ...prev, fileTree: data, isFetchingTree: false }));
     } catch (err) {
@@ -143,9 +135,7 @@ export function useAppStore(initialCode: string) {
 
       const content = await response.text();
       
-      if (content.startsWith("ERROR:")) {
-        return;
-      }
+      if (content.startsWith("ERROR:")) return;
       
       setState(prev => ({
         ...prev,
@@ -190,7 +180,7 @@ export function useAppStore(initialCode: string) {
           activeFilePath: newPath,
           isDirty: false 
         }));
-        fetchWorkspaceTree(); // Refresh tree to show new file
+        fetchWorkspaceTree();
       }
     } catch (err) {
       console.error("[WORKSPACE]: Save As failed", err);
@@ -201,33 +191,16 @@ export function useAppStore(initialCode: string) {
     const fetchInitialData = async () => {
       try {
         const response = await fetch('/api/settings/keys/status');
-        let mockStatus = {
-          openai: false,
-          anthropic: false,
-          gemini: false,
-          local: true
-        };
-
         if (response.ok) {
           const status = await response.json();
-          mockStatus = { ...mockStatus, ...status };
+          setState(prev => ({ ...prev, keyStatus: status }));
         }
-        
-        setState(prev => ({
-          ...prev,
-          keyStatus: mockStatus,
-        }));
-      } catch (e) {
-        console.warn("[INIT]: Could not fetch key status");
-      }
-
+      } catch (e) {}
       fetchWorkspaceTree();
     };
-
     fetchInitialData();
   }, [fetchWorkspaceTree]);
 
-  // Keyboard Shortcuts Listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
@@ -265,17 +238,13 @@ export function useAppStore(initialCode: string) {
   }, []);
 
   const openDiff = useCallback((refactoredCode: string) => {
-    const originalMetrics = calculateComplexity(state.code);
-    const proposedMetrics = calculateComplexity(refactoredCode);
-    
     setState(prev => ({
       ...prev,
       proposedCode: refactoredCode,
       isDiffOpen: true,
-      originalMetrics,
-      proposedMetrics,
+      proposedMetrics: calculateComplexity(refactoredCode),
     }));
-  }, [state.code]);
+  }, []);
 
   const acceptRefactor = useCallback(() => {
     setState(prev => ({

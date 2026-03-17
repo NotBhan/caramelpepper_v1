@@ -1,4 +1,3 @@
-
 "use client"
 
 import React from "react"
@@ -21,20 +20,20 @@ import {
   MenubarTrigger,
 } from "@/components/ui/menubar"
 import { useAppStore } from "@/store/use-app-store"
-import { cn } from "@/lib/utils"
 
 export function MenuBar() {
-  const store = useAppStore(""); // Initialized with empty code, state managed by store internally
+  const store = useAppStore("");
 
   const handleOpenFile = async () => {
     try {
-      // @ts-ignore - modern File System Access API
+      // @ts-ignore - Modern File System Access API
       const [fileHandle] = await window.showOpenFilePicker();
-      const file = await fileHandle.getFile();
-      // Since we can't easily get the absolute path in browser, 
-      // we might just use the file name or rely on the backend connection.
-      // For local tools, we usually use the path we know or get from tree.
-      console.log("Opened file:", file.name);
+      if (fileHandle) {
+        // Since absolute paths aren't available for security, we simulate
+        // loading via the filename if it matches our mock structure or 
+        // rely on the handle metadata.
+        store.openFile(`src/${fileHandle.name}`);
+      }
     } catch (err) {
       console.log("File picker cancelled or failed");
     }
@@ -42,9 +41,11 @@ export function MenuBar() {
 
   const handleOpenFolder = async () => {
     try {
-      // @ts-ignore - modern File System Access API
+      // @ts-ignore - Modern File System Access API
       const dirHandle = await window.showDirectoryPicker();
-      store.fetchWorkspaceTree(dirHandle.name);
+      if (dirHandle) {
+        store.fetchWorkspaceTree(dirHandle.name);
+      }
     } catch (err) {
       console.log("Folder picker cancelled or failed");
     }

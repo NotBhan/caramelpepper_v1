@@ -1,4 +1,3 @@
-
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -7,11 +6,6 @@
 #include <algorithm>
 #include "nlohmann/json.hpp"
 
-/**
- * @file fs_handlers.cpp
- * @brief Filesystem API handlers for workspace navigation, file reading, and writing.
- */
-
 namespace CaramelPepper::API {
 
 namespace fs = std::filesystem;
@@ -19,10 +13,6 @@ using json = nlohmann::json;
 
 const std::set<std::string> IGNORE_LIST = {".git", "node_modules", "build", ".gguf", ".next", "out"};
 
-/**
- * Recursively builds a JSON directory tree.
- * Metadata only; does not read file contents.
- */
 json buildTree(const fs::path& path) {
     json result = json::array();
     
@@ -32,7 +22,6 @@ json buildTree(const fs::path& path) {
         for (const auto& entry : fs::directory_iterator(path)) {
             std::string name = entry.path().filename().string();
             
-            // Skip ignored patterns
             if (IGNORE_LIST.find(name) != IGNORE_LIST.end()) continue;
 
             json item;
@@ -47,10 +36,8 @@ json buildTree(const fs::path& path) {
             result.push_back(item);
         }
     } catch (const fs::filesystem_error& e) {
-        // Silently handle inaccessible directories
     }
 
-    // Sort: Directories first, then alphabetical
     std::sort(result.begin(), result.end(), [](const json& a, const json& b) {
         if (a["is_dir"] != b["is_dir"]) return a["is_dir"].get<bool>();
         return a["name"].get<std::string>() < b["name"].get<std::string>();
@@ -59,19 +46,12 @@ json buildTree(const fs::path& path) {
     return result;
 }
 
-/**
- * Handler for GET /api/workspace/tree
- */
 std::string handleGetWorkspaceTree(const std::string& rootPath = "") {
     fs::path root = rootPath.empty() ? fs::current_path() : fs::path(rootPath);
     return buildTree(root).dump();
 }
 
-/**
- * Handler for GET /api/workspace/read?path=...
- */
 std::string handleReadFile(const std::string& filePath) {
-    // Basic Path Traversal Protection
     if (filePath.find("..") != std::string::npos) {
         return "ERROR: Access denied (path traversal detected).";
     }
@@ -91,18 +71,13 @@ std::string handleReadFile(const std::string& filePath) {
     return content;
 }
 
-/**
- * Handler for POST /api/workspace/save
- */
 bool handleSaveFile(const std::string& filePath, const std::string& content) {
     if (filePath.empty()) return false;
     
-    // Basic Path Traversal Protection
     if (filePath.find("..") != std::string::npos) return false;
 
     try {
         fs::path p(filePath);
-        // Ensure parent directory exists
         if (p.has_parent_path()) {
             fs::create_directories(p.parent_path());
         }
