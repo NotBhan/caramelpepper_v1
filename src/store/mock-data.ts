@@ -19,6 +19,7 @@ export const MOCK_FILE_TREE: FileItem[] = [
         children: [
           { name: "analyzer.cpp", path: "src/core/analyzer.cpp", is_dir: false },
           { name: "optimizer.cpp", path: "src/core/optimizer.cpp", is_dir: false },
+          { name: "complex-module.ts", path: "src/core/complex-module.ts", is_dir: false },
         ],
       },
     ],
