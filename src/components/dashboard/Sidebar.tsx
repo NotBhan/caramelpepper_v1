@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { ShieldCheck, LayoutGrid, FileCode, Search, Database, History, Settings, RefreshCw, AlertCircle } from "lucide-react"
+import { ShieldCheck, LayoutGrid, FileCode, Search, Database, History, Settings, RefreshCw, AlertCircle, FolderOpen, FileQuestion } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { FileExplorer } from "./FileExplorer"
 import { Button } from "@/components/ui/button"
@@ -37,6 +37,8 @@ interface SidebarProps {
   isFetchingTree: boolean;
   onRefreshTree: () => void;
   onOpenFile: (path: string) => void;
+  workspaceRoot: string | null;
+  onOpenWorkspace: () => void;
 }
 
 export function Sidebar({ 
@@ -46,7 +48,9 @@ export function Sidebar({
   activeFilePath,
   isFetchingTree,
   onRefreshTree,
-  onOpenFile
+  onOpenFile,
+  workspaceRoot,
+  onOpenWorkspace
 }: SidebarProps) {
   const [activeTab, setActiveTab] = React.useState('editor')
 
@@ -74,26 +78,48 @@ export function Sidebar({
           <div className="flex items-center justify-between mb-2 px-3">
             <div className="flex items-center gap-2">
               <div className="text-[10px] font-bold text-[#858585] uppercase tracking-wider">Project Files</div>
-              <Badge variant="outline" className="h-4 px-1 text-[8px] border-[#3c3c3c] text-[#858585] gap-1">
-                <AlertCircle className="w-2 h-2" />
-                MOCK
-              </Badge>
+              {!workspaceRoot && (
+                <Badge variant="outline" className="h-4 px-1 text-[8px] border-amber-500/30 text-amber-500 gap-1 bg-amber-500/5">
+                  <FileQuestion className="w-2 h-2" />
+                  SINGLE
+                </Badge>
+              )}
             </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-4 w-4 text-[#858585] hover:text-[#007acc]"
-              onClick={onRefreshTree}
-            >
-              <RefreshCw className={cn("w-3 h-3", isFetchingTree && "animate-spin")} />
-            </Button>
+            {workspaceRoot && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-4 w-4 text-[#858585] hover:text-[#007acc]"
+                onClick={onRefreshTree}
+              >
+                <RefreshCw className={cn("w-3 h-3", isFetchingTree && "animate-spin")} />
+              </Button>
+            )}
           </div>
+          
           <div className="px-1">
-            <FileExplorer 
-              items={fileTree} 
-              activePath={activeFilePath} 
-              onFileClick={onOpenFile} 
-            />
+            {workspaceRoot ? (
+              <FileExplorer 
+                items={fileTree} 
+                activePath={activeFilePath} 
+                onFileClick={onOpenFile} 
+              />
+            ) : (
+              <div className="py-8 px-4 text-center space-y-4">
+                <p className="text-[11px] text-[#858585] leading-relaxed">
+                  No workspace opened. You are in Single File Mode.
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={onOpenWorkspace}
+                  className="h-7 text-[10px] border-[#3c3c3c] text-[#cccccc] hover:bg-[#2a2d2e] w-full"
+                >
+                  <FolderOpen className="w-3 h-3 mr-2" />
+                  Open Workspace
+                </Button>
+              </div>
+            )}
           </div>
         </nav>
 

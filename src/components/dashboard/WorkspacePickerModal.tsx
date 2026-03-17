@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { FolderOpen, MapPin, AlertCircle, Loader2 } from "lucide-react"
+import { FolderOpen, MapPin, AlertCircle, Loader2, FileX } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -18,9 +18,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 interface WorkspacePickerModalProps {
   isOpen: boolean;
   onSelect: (path: string) => Promise<boolean>;
+  onSkip: () => void;
 }
 
-export function WorkspacePickerModal({ isOpen, onSelect }: WorkspacePickerModalProps) {
+export function WorkspacePickerModal({ isOpen, onSelect, onSkip }: WorkspacePickerModalProps) {
   const [path, setPath] = React.useState("")
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
@@ -83,11 +84,20 @@ export function WorkspacePickerModal({ isOpen, onSelect }: WorkspacePickerModalP
             </Alert>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="flex flex-col gap-2 sm:flex-row">
+            <Button 
+              type="button"
+              variant="ghost"
+              onClick={onSkip}
+              className="text-[#858585] hover:text-[#ffffff] hover:bg-[#2a2d2e]"
+            >
+              <FileX className="w-4 h-4 mr-2" />
+              Skip Workspace (Single File Mode)
+            </Button>
             <Button 
               type="submit" 
               disabled={!path.trim() || isSubmitting}
-              className="w-full bg-[#007acc] hover:bg-[#0062a3] text-[#ffffff] font-bold"
+              className="bg-[#007acc] hover:bg-[#0062a3] text-[#ffffff] font-bold"
             >
               {isSubmitting ? (
                 <>

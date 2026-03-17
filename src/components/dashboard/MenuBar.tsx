@@ -8,7 +8,8 @@ import {
   FilePlus, 
   Keyboard,
   ShieldCheck,
-  Code
+  Code,
+  FileOutput
 } from "lucide-react"
 import {
   Menubar,
@@ -24,8 +25,15 @@ import { useAppStore } from "@/store/use-app-store"
 export function MenuBar() {
   const store = useAppStore("");
 
-  const handleOpenFile = async () => {
+  const handleOpenLocalFile = async () => {
     await store.openLocalFile();
+  }
+
+  const handleOpenSingleFile = async () => {
+    const path = prompt("Enter absolute file path:");
+    if (path) {
+      await store.openFile(path);
+    }
   }
 
   const handleOpenFolder = () => {
@@ -45,14 +53,18 @@ export function MenuBar() {
             File
           </MenubarTrigger>
           <MenubarContent className="bg-[#252526] border-[#3c3c3c] text-[#cccccc]">
-            <MenubarItem onClick={handleOpenFile} className="flex items-center gap-2 text-xs focus:bg-[#007acc] focus:text-[#ffffff]">
+            <MenubarItem onClick={handleOpenLocalFile} className="flex items-center gap-2 text-xs focus:bg-[#007acc] focus:text-[#ffffff]">
               <File className="w-3.5 h-3.5" />
-              Open File...
+              Open Browser File...
               <MenubarShortcut>Ctrl+O</MenubarShortcut>
+            </MenubarItem>
+            <MenubarItem onClick={handleOpenSingleFile} className="flex items-center gap-2 text-xs focus:bg-[#007acc] focus:text-[#ffffff]">
+              <FileOutput className="w-3.5 h-3.5" />
+              Open Single File...
             </MenubarItem>
             <MenubarItem onClick={handleOpenFolder} className="flex items-center gap-2 text-xs focus:bg-[#007acc] focus:text-[#ffffff]">
               <FolderOpen className="w-3.5 h-3.5" />
-              Open Folder...
+              Open Workspace Folder...
               <MenubarShortcut>Ctrl+K Ctrl+O</MenubarShortcut>
             </MenubarItem>
             <MenubarSeparator className="bg-[#3c3c3c]" />
@@ -113,7 +125,7 @@ export function MenuBar() {
             <span className="text-[9px] font-bold text-[#007acc] uppercase">Unsaved Changes</span>
           </div>
         )}
-        <div className="text-[10px] text-[#858585] font-mono">
+        <div className="text-[10px] text-[#858585] font-mono truncate max-w-[300px]">
           {store.activeFilePath || "No File Open"}
         </div>
       </div>

@@ -1,4 +1,3 @@
-
 "use client"
 
 import React from "react"
@@ -114,6 +113,8 @@ export default function Dashboard() {
               isFetchingTree={store.isFetchingTree}
               onRefreshTree={() => store.fetchWorkspaceTree(store.workspaceRoot || undefined)}
               onOpenFile={store.openFile}
+              workspaceRoot={store.workspaceRoot}
+              onOpenWorkspace={() => store.resetWorkspaceRoot()}
             />
           }
           editor={
@@ -122,7 +123,7 @@ export default function Dashboard() {
               onChange={store.setCode} 
               onAnalyze={handleAnalyze}
               isAnalyzing={isBusy}
-              title={store.activeFilePath?.split('/').pop() || "scratchpad.ts"}
+              title={store.activeFilePath?.split(/[/\\]/).pop() || "scratchpad.ts"}
             />
           }
           refactor={
@@ -153,8 +154,9 @@ export default function Dashboard() {
       </div>
       
       <WorkspacePickerModal 
-        isOpen={store.workspaceRoot === null}
+        isOpen={!store.isPickerDismissed && store.workspaceRoot === null}
         onSelect={store.setWorkspaceRoot}
+        onSkip={store.dismissPicker}
       />
 
       <SettingsModal 

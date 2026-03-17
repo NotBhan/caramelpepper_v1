@@ -4,6 +4,7 @@ import { normalizeAbsolutePath } from '@/lib/path-utils';
 
 /**
  * Reads the content of a file from the filesystem.
+ * Handles decoding for paths with special characters like brackets or spaces.
  */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -13,7 +14,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Missing path parameter' }, { status: 400 });
   }
 
-  const filePath = normalizeAbsolutePath(rawPath);
+  // Ensure the path is properly decoded to handle special characters correctly
+  const decodedPath = decodeURIComponent(rawPath);
+  const filePath = normalizeAbsolutePath(decodedPath);
   
   try {
     const content = await fs.readFile(filePath, 'utf-8');

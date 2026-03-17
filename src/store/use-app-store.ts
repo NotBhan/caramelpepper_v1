@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
@@ -28,6 +27,7 @@ export interface AppState {
   isFetchingTree: boolean;
   isDirty: boolean;
   workspaceRoot: string | null;
+  isPickerDismissed: boolean;
 }
 
 export function useAppStore(initialCode: string) {
@@ -46,6 +46,7 @@ export function useAppStore(initialCode: string) {
       isFetchingTree: false,
       isDirty: false,
       workspaceRoot: null,
+      isPickerDismissed: false,
     };
   });
 
@@ -76,7 +77,7 @@ export function useAppStore(initialCode: string) {
       });
 
       if (response.ok) {
-        setState(prev => ({ ...prev, workspaceRoot: path }));
+        setState(prev => ({ ...prev, workspaceRoot: path, isPickerDismissed: true }));
         await fetchWorkspaceTree(path);
         return true;
       }
@@ -87,7 +88,38 @@ export function useAppStore(initialCode: string) {
   }, [fetchWorkspaceTree]);
 
   const resetWorkspaceRoot = useCallback(() => {
-    setState(prev => ({ ...prev, workspaceRoot: null, fileTree: [] }));
+    setState(prev => ({ ...prev, workspaceRoot: null, fileTree: [], isPickerDismissed: false }));
+  }, []);
+
+  const dismissPicker = useCallback(() => {
+    setState(prev => ({ ...prev, isPickerDismissed: true }));
+  }, []);
+
+  const openFile = useCallback(async (path: string, handle?: FileSystemFileHandle) => {
+    try {
+      let content = "";
+      if (handle) {
+        const file = await handle.getFile();
+        content = await file.text();
+      } else {
+        // Use encodeURIComponent to safely pass paths with brackets, spaces, etc.
+        const response = await fetch(`/api/workspace/read?path=${encodeURIComponent(path)}`);
+        if (!response.ok) return;
+        content = await response.text();
+      }
+      
+      setState(prev => ({
+        ...prev,
+        code: content,
+        activeFilePath: path,
+        originalMetrics: calculateComplexity(content),
+        isDiffOpen: false,
+        proposedCode: "",
+        isDirty: false,
+      }));
+    } catch (err) {
+      console.error("[WORKSPACE]: Error reading file", err);
+    }
   }, []);
 
   const openLocalFile = useCallback(async () => {
@@ -121,32 +153,6 @@ export function useAppStore(initialCode: string) {
     }
   }, []);
 
-  const openFile = useCallback(async (path: string, handle?: FileSystemFileHandle) => {
-    try {
-      let content = "";
-      if (handle) {
-        const file = await handle.getFile();
-        content = await file.text();
-      } else {
-        const response = await fetch(`/api/workspace/read?path=${encodeURIComponent(path)}`);
-        if (!response.ok) return;
-        content = await response.text();
-      }
-      
-      setState(prev => ({
-        ...prev,
-        code: content,
-        activeFilePath: path,
-        originalMetrics: calculateComplexity(content),
-        isDiffOpen: false,
-        proposedCode: "",
-        isDirty: false,
-      }));
-    } catch (err) {
-      console.error("[WORKSPACE]: Error reading file", err);
-    }
-  }, []);
-
   const saveActiveFile = useCallback(async () => {
     if (!state.activeFilePath) return;
     try {
@@ -176,7 +182,9 @@ export function useAppStore(initialCode: string) {
           activeFilePath: newPath,
           isDirty: false 
         }));
-        fetchWorkspaceTree(state.workspaceRoot || undefined);
+        if (state.workspaceRoot) {
+          fetchWorkspaceTree(state.workspaceRoot);
+        }
       }
     } catch (err) {
       console.error("[WORKSPACE]: Save As failed", err);
@@ -321,6 +329,7 @@ export function useAppStore(initialCode: string) {
     fetchWorkspaceTree,
     setWorkspaceRoot,
     resetWorkspaceRoot,
+    dismissPicker,
     openFile,
     saveActiveFile,
     saveFileAs,
