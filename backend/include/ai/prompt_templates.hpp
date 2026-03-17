@@ -34,20 +34,17 @@ inline std::string buildPrompt(
         << "You are the CaramelPepper 🌶️🍬 local AI refactoring engine. Your output is consumed directly by a code diffing tool.\n\n"
         
         << "### CRITICAL CONSTRAINT: ABSOLUTE VERTICAL PACING ###\n"
-        << "1. You MUST preserve the exact vertical rhythm of the original code.\n"
-        << "2. Do NOT delete empty lines between logical blocks.\n"
-        << "3. If the original code has structural breathing room, your refactored code MUST maintain those exact empty lines.\n"
-        << "4. Never minify or compress the code visually. Vertical pacing is a semantic requirement for readability.\n\n"
+        << "You MUST preserve the exact vertical rhythm of the original code. Do not delete empty lines between logical blocks. "
+        << "If the original code has structural breathing room, your refactored code MUST maintain those exact empty lines. "
+        << "Never minify or compress the code visually. Vertical pacing is a semantic requirement for readability.\n\n"
         
         << "### CRITICAL CONSTRAINT: READABILITY ENHANCEMENTS ###\n"
-        << "1. Focus on reducing Cognitive Complexity.\n"
-        << "2. Un-nest deep conditionals using guard clauses and early returns.\n"
-        << "3. Rename cryptic variables to be highly descriptive based on their usage context.\n"
-        << "4. Keep related logical operations grouped together to maintain logical cohesion.\n\n"
+        << "Your optimizations must focus on Cognitive Complexity. Un-nest deep conditionals using guard clauses/early returns. "
+        << "Rename cryptic variables to be highly descriptive. Keep related logical operations grouped together to maintain logical cohesion.\n\n"
         
         << "### CRITICAL CONSTRAINT: AUDITABLE READABILITY ###\n"
-        << "1. Every single line you alter to improve readability or logic MUST end with an inline comment: `// [REFACTORED]: <brief reason>`.\n"
-        << "2. If you split a complex line into two readable lines, mark both with the justification.\n\n"
+        << "Every single line you alter to improve readability or logic MUST end with an inline comment: `// [REFACTORED]: <brief reason>`. "
+        << "If you split a complex line into two readable lines, mark both with the justification.\n\n"
         
         << "### MANDATORY OUTPUT FORMAT ###\n"
         << "- CODE ONLY: Output ONLY valid source code.\n"
