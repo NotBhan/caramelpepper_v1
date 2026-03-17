@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useEffect } from "react"
 import { type ComplexityMetrics, calculateComplexity } from "@/lib/complexity"
-import { MOCK_FILE_TREE } from "./mock-data"
 
 export type InferenceProvider = 'local' | 'anthropic' | 'openai' | 'gemini';
 
@@ -11,6 +10,7 @@ export type FileItem = {
   path: string;
   is_dir: boolean;
   children?: FileItem[];
+  handle?: FileSystemFileHandle | FileSystemDirectoryHandle;
 };
 
 export interface AppState {
@@ -27,54 +27,6 @@ export interface AppState {
   isDirty: boolean;
 }
 
-const COMPLEX_TEST_CODE = `function handleRequest(req: any, res: any) {
-  const data = req.body;
-  
-  if (data && data.user) {
-    if (data.user.isAdmin) {
-      if (data.action === 'delete') {
-        return performDelete(data.id);
-      } else if (data.action === 'update') {
-        return performUpdate(data.id, data.payload);
-      } else {
-        return res.status(400).send("Invalid action");
-      }
-    } else {
-      if (data.action === 'read') {
-        return performRead(data.id);
-      } else {
-        return res.status(403).send("Forbidden");
-      }
-    }
-  } else {
-    return res.status(401).send("Unauthorized");
-  }
-
-  const results = data.items.map(item => {
-    if (item.valid) {
-      return item.value > 10 ? item.value * 2 : item.value + 5;
-    }
-    return null;
-  }).filter(val => val !== null);
-
-  for (let i = 0; i < results.length; i++) {
-    while (results[i] < 100) {
-      results[i] *= 1.1;
-      if (results[i] > 50 && results[i] < 60) {
-        console.log("Mid range reached");
-      }
-    }
-  }
-
-  try {
-    saveToDatabase(results);
-  } catch (e) {
-    console.error("Failed to save", e);
-  }
-
-  return results;
-}`;
-
 export function useAppStore(initialCode: string) {
   const [state, setState] = useState<AppState>(() => {
     return {
@@ -85,7 +37,7 @@ export function useAppStore(initialCode: string) {
       proposedMetrics: null,
       inferenceProvider: 'local',
       keyStatus: {},
-      fileTree: MOCK_FILE_TREE,
+      fileTree: [],
       activeFilePath: null,
       isFetchingTree: false,
       isDirty: false,
@@ -110,30 +62,94 @@ export function useAppStore(initialCode: string) {
     }
   }, []);
 
-  const openFile = useCallback(async (path: string) => {
+  const openLocalFile = useCallback(async () => {
     try {
-      const response = await fetch(`/api/workspace/read?path=${encodeURIComponent(path)}`);
+      // @ts-ignore
+      const [handle] = await window.showOpenFilePicker({
+        types: [
+          {
+            description: 'Code Files',
+            accept: {
+              'text/plain': ['.ts', '.tsx', '.js', '.jsx', '.cpp', '.hpp', '.py', '.rs'],
+            },
+          },
+        ],
+      });
       
-      if (!response.ok) {
-        let mockContent = `/**\n * Mock content for ${path}\n * Status: Disconnected from backend\n */\n\nvoid exampleFunction() {\n  // Logic for ${path.split('/').pop()} goes here\n}`;
-        
-        if (path === 'src/core/complex-module.ts') {
-          mockContent = COMPLEX_TEST_CODE;
+      const file = await handle.getFile();
+      const content = await file.text();
+      
+      setState(prev => ({
+        ...prev,
+        code: content,
+        activeFilePath: handle.name,
+        originalMetrics: calculateComplexity(content),
+        isDiffOpen: false,
+        proposedCode: "",
+        isDirty: false,
+      }));
+    } catch (err) {
+      console.log("File selection cancelled");
+    }
+  }, []);
+
+  const openLocalFolder = useCallback(async () => {
+    try {
+      // @ts-ignore
+      const dirHandle = await window.showDirectoryPicker();
+      setState(prev => ({ ...prev, isFetchingTree: true }));
+
+      const buildTree = async (handle: FileSystemDirectoryHandle, path: string): Promise<FileItem> => {
+        const children: FileItem[] = [];
+        // @ts-ignore
+        for await (const entry of handle.values()) {
+          const entryPath = `${path}/${entry.name}`;
+          if (entry.kind === 'directory') {
+            children.push(await buildTree(entry, entryPath));
+          } else {
+            children.push({
+              name: entry.name,
+              path: entryPath,
+              is_dir: false,
+              handle: entry
+            });
+          }
         }
+        return {
+          name: handle.name,
+          path,
+          is_dir: true,
+          children: children.sort((a, b) => {
+            if (a.is_dir !== b.is_dir) return a.is_dir ? -1 : 1;
+            return a.name.localeCompare(b.name);
+          }),
+          handle
+        };
+      };
 
-        setState(prev => ({
-          ...prev,
-          code: mockContent,
-          activeFilePath: path,
-          originalMetrics: calculateComplexity(mockContent),
-          isDiffOpen: false,
-          proposedCode: "",
-          isDirty: false,
-        }));
-        return;
+      const root = await buildTree(dirHandle, dirHandle.name);
+      setState(prev => ({
+        ...prev,
+        fileTree: [root],
+        isFetchingTree: false
+      }));
+    } catch (err) {
+      console.log("Directory selection cancelled");
+      setState(prev => ({ ...prev, isFetchingTree: false }));
+    }
+  }, []);
+
+  const openFile = useCallback(async (path: string, handle?: FileSystemFileHandle) => {
+    try {
+      let content = "";
+      if (handle) {
+        const file = await handle.getFile();
+        content = await file.text();
+      } else {
+        const response = await fetch(`/api/workspace/read?path=${encodeURIComponent(path)}`);
+        if (!response.ok) return;
+        content = await response.text();
       }
-
-      const content = await response.text();
       
       if (content.startsWith("ERROR:")) return;
       
@@ -288,5 +304,7 @@ export function useAppStore(initialCode: string) {
     openFile,
     saveActiveFile,
     saveFileAs,
+    openLocalFile,
+    openLocalFolder,
   };
 }

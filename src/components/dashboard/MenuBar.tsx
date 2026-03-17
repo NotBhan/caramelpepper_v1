@@ -25,27 +25,11 @@ export function MenuBar() {
   const store = useAppStore("");
 
   const handleOpenFile = async () => {
-    try {
-      // @ts-ignore - Modern File System Access API
-      const [fileHandle] = await window.showOpenFilePicker();
-      if (fileHandle) {
-        store.openFile(`src/${fileHandle.name}`);
-      }
-    } catch (err) {
-      console.log("File picker cancelled or failed");
-    }
+    await store.openLocalFile();
   }
 
   const handleOpenFolder = async () => {
-    try {
-      // @ts-ignore - Modern File System Access API
-      const dirHandle = await window.showDirectoryPicker();
-      if (dirHandle) {
-        store.fetchWorkspaceTree(dirHandle.name);
-      }
-    } catch (err) {
-      console.log("Folder picker cancelled or failed");
-    }
+    await store.openLocalFolder();
   }
 
   return (

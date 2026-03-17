@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 interface FileExplorerProps {
   items: FileItem[];
   activePath: string | null;
-  onFileClick: (path: string) => void;
+  onFileClick: (path: string, handle?: any) => void;
 }
 
 export function FileExplorer({ items, activePath, onFileClick }: FileExplorerProps) {
@@ -30,7 +30,7 @@ export function FileExplorer({ items, activePath, onFileClick }: FileExplorerPro
 interface FileExplorerItemProps {
   item: FileItem;
   activePath: string | null;
-  onFileClick: (path: string) => void;
+  onFileClick: (path: string, handle?: any) => void;
   depth: number;
 }
 
@@ -42,7 +42,7 @@ function FileExplorerItem({ item, activePath, onFileClick, depth }: FileExplorer
     if (item.is_dir) {
       setIsExpanded(!isExpanded)
     } else {
-      onFileClick(item.path)
+      onFileClick(item.path, item.handle)
     }
   }
 
