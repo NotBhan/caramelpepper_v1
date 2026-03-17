@@ -58,13 +58,14 @@ export function useAppStore(initialCode: string) {
       
       if (!response.ok) {
         setState(prev => ({ ...prev, isFetchingTree: false }));
-        return;
+        throw new Error("Failed to load workspace tree");
       }
 
       const data = await response.json();
       setState(prev => ({ ...prev, fileTree: data, isFetchingTree: false }));
     } catch (err) {
       setState(prev => ({ ...prev, isFetchingTree: false }));
+      throw err;
     }
   }, []);
 
@@ -77,8 +78,8 @@ export function useAppStore(initialCode: string) {
       });
 
       if (response.ok) {
-        setState(prev => ({ ...prev, workspaceRoot: path, isPickerDismissed: true }));
         await fetchWorkspaceTree(path);
+        setState(prev => ({ ...prev, workspaceRoot: path, isPickerDismissed: true }));
         return true;
       }
       return false;
@@ -102,7 +103,6 @@ export function useAppStore(initialCode: string) {
         const file = await handle.getFile();
         content = await file.text();
       } else {
-        // Use encodeURIComponent to safely pass paths with brackets, spaces, etc.
         const response = await fetch(`/api/workspace/read?path=${encodeURIComponent(path)}`);
         if (!response.ok) return;
         content = await response.text();
@@ -120,6 +120,18 @@ export function useAppStore(initialCode: string) {
     } catch (err) {
       console.error("[WORKSPACE]: Error reading file", err);
     }
+  }, []);
+
+  const closeActiveFile = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      code: "",
+      activeFilePath: null,
+      originalMetrics: null,
+      isDiffOpen: false,
+      proposedCode: "",
+      isDirty: false,
+    }));
   }, []);
 
   const openLocalFile = useCallback(async () => {
@@ -331,6 +343,7 @@ export function useAppStore(initialCode: string) {
     resetWorkspaceRoot,
     dismissPicker,
     openFile,
+    closeActiveFile,
     saveActiveFile,
     saveFileAs,
     openLocalFile,

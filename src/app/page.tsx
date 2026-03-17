@@ -45,14 +45,12 @@ export default function Dashboard() {
     setIsBusy(true)
     setRefactorOutput(null)
     try {
-      // Style analysis remains a Genkit flow for now
       const style = await analyzeCodeStyle({ code: store.code })
       setStyleReport(style)
 
       let refactorResult;
 
       if (store.inferenceProvider === 'ollama') {
-        // Use the new API route for Ollama
         const response = await fetch('/api/ai/refactor', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -70,7 +68,6 @@ export default function Dashboard() {
 
         refactorResult = await response.json();
       } else {
-        // Use Genkit server actions for cloud/local llama.cpp
         refactorResult = await localCodeRefactoring({ 
           code: store.code, 
           language: 'typescript' 
@@ -123,7 +120,8 @@ export default function Dashboard() {
               onChange={store.setCode} 
               onAnalyze={handleAnalyze}
               isAnalyzing={isBusy}
-              title={store.activeFilePath?.split(/[/\\]/).pop() || "scratchpad.ts"}
+              onClose={store.closeActiveFile}
+              activeFilePath={store.activeFilePath}
             />
           }
           refactor={

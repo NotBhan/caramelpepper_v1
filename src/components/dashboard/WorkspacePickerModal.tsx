@@ -34,18 +34,21 @@ export function WorkspacePickerModal({ isOpen, onSelect, onSkip }: WorkspacePick
     setError(null)
     setIsSubmitting(true)
     
-    const success = await onSelect(trimmedPath)
-    
-    if (!success) {
-      setError("Failed to open workspace. Ensure the absolute path is correct and accessible by the backend.")
+    try {
+      const success = await onSelect(trimmedPath)
+      if (!success) {
+        setError("Directory not found. Please ensure the absolute path is correct and accessible by the backend.")
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to initialize workspace.")
+    } finally {
+      setIsSubmitting(false)
     }
-    
-    setIsSubmitting(false)
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-[560px] bg-[#252526] border-[#3c3c3c] text-[#cccccc] p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[560px] bg-[#252526] border-[#3c3c3c] text-[#cccccc] p-0 overflow-hidden shadow-2xl">
         <div className="p-6 pb-0">
           <DialogHeader>
             <div className="flex items-center gap-2 mb-2">
@@ -69,7 +72,10 @@ export function WorkspacePickerModal({ isOpen, onSelect, onSkip }: WorkspacePick
                 id="path"
                 placeholder="e.g., C:/Projects/App or /home/user/app"
                 value={path}
-                onChange={(e) => setPath(e.target.value)}
+                onChange={(e) => {
+                  setPath(e.target.value);
+                  if (error) setError(null);
+                }}
                 className="bg-[#1e1e1e] border-[#3c3c3c] focus:ring-[#007acc] h-10 text-[#ffffff] font-mono text-sm"
                 autoFocus
               />
@@ -93,10 +99,10 @@ export function WorkspacePickerModal({ isOpen, onSelect, onSkip }: WorkspacePick
               type="button"
               variant="ghost"
               onClick={onSkip}
-              className="text-[#858585] hover:text-[#ffffff] hover:bg-[#2a2d2e] text-xs h-9 px-3"
+              className="text-[#858585] hover:text-[#ffffff] hover:bg-[#2a2d2e] text-xs h-9 px-3 group"
             >
-              <FileX className="w-4 h-4 mr-2" />
-              Skip Workspace
+              <FileX className="w-4 h-4 mr-2 group-hover:text-amber-500 transition-colors" />
+              Skip Workspace (Single File Mode)
             </Button>
             <div className="flex items-center gap-2">
               <Button 
