@@ -47,7 +47,37 @@ const prompt = ai.definePrompt({
   name: 'localCodeRefactoringPrompt',
   input: {schema: LocalCodeRefactoringInputSchema},
   output: {schema: LocalCodeRefactoringOutputSchema},
-  prompt: `You are an expert code refactoring assistant, specializing in improving code quality, maintainability, and reducing complexity.\nYour goal is to analyze the provided code and offer context-aware, privacy-preserving refactoring suggestions.\nFocus on identifying areas of high complexity, potential bugs, readability issues, and suggesting improvements while adhering to good coding practices.\nIf a full refactoring of the code is straightforward and significantly improves it, provide the \`refactoredCode\`. Otherwise, provide detailed \`suggestions\` and a brief \`complexityAnalysis\`.\n\nConsider the following code written in {{#if language}}{{language}}{{else}}an unspecified language{{/if}}:\n\n\`\`\`{{#if language}}{{language}}{{/if}}\n{{{code}}}\n\`\`\`\n\nPlease provide your analysis and refactoring output in the following JSON format:\n\`\`\`json\n{\n  "refactoredCode": "...",\n  "suggestions": [\n    "...",\n    "..."\n  ],\n  "complexityAnalysis": "..."\n}\n\`\`\`\n`,
+  prompt: `You are an expert code refactoring assistant, specializing in improving code quality, maintainability, and reducing complexity.
+
+### CRITICAL CONSTRAINT: VERTICAL PACING ###
+You are a strict code formatter. You MUST preserve 100% of the original vertical spacing.
+- If the original code has an empty line between two logical blocks, your output MUST have an empty line in the exact same place.
+- Do not compress or minify the code.
+- Maintain the exact original paragraphing of the source code.
+- Failure to preserve original blank lines is a critical failure.
+
+Your goal is to analyze the provided code and offer context-aware, privacy-preserving refactoring suggestions.
+Focus on identifying areas of high complexity, potential bugs, readability issues, and suggesting improvements while adhering to good coding practices.
+If a full refactoring of the code is straightforward and significantly improves it, provide the \`refactoredCode\`. Otherwise, provide detailed \`suggestions\` and a brief \`complexityAnalysis\`.
+
+Consider the following code written in {{#if language}}{{language}}{{else}}an unspecified language{{/if}}:
+
+\`\`\`{{#if language}}{{language}}{{/if}}
+{{{code}}}
+\`\`\`
+
+Please provide your analysis and refactoring output in the following JSON format:
+\`\`\`json
+{
+  "refactoredCode": "...",
+  "suggestions": [
+    "...",
+    "..."
+  ],
+  "complexityAnalysis": "..."
+}
+\`\`\`
+`,
 });
 
 const localCodeRefactoringFlow = ai.defineFlow(
