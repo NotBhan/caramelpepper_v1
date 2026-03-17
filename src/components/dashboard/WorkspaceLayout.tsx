@@ -35,11 +35,11 @@ export function WorkspaceLayout({
   }
 
   if (!isMounted) {
-    return <div className="h-screen w-screen bg-[#1e1e1e]" />
+    return <div className="h-full w-full bg-[#1e1e1e]" />
   }
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[#1e1e1e] text-[#cccccc] flex flex-col">
+    <div className="h-full w-full overflow-hidden bg-[#1e1e1e] text-[#cccccc] flex flex-col">
       <PanelGroup direction="horizontal" onLayout={onLayout}>
         {/* Project Explorer / Sidebar */}
         <Panel
