@@ -45,21 +45,41 @@ export function useAppStore(initialCode: string) {
   const fetchWorkspaceTree = useCallback(async () => {
     setState(prev => ({ ...prev, isFetchingTree: true }));
     try {
-      // [SIMULATED]: In production, calls GET /api/workspace/tree
       const response = await fetch('/api/workspace/tree');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.warn("[WORKSPACE]: Received non-JSON response", text.substring(0, 100));
+        throw new Error("Expected JSON response from workspace API");
+      }
+
       const data = await response.json();
       setState(prev => ({ ...prev, fileTree: data, isFetchingTree: false }));
     } catch (err) {
-      console.error("Failed to fetch workspace tree", err);
-      setState(prev => ({ ...prev, isFetchingTree: false }));
+      console.error("[WORKSPACE]: Failed to fetch tree", err);
+      setState(prev => ({ ...prev, fileTree: [], isFetchingTree: false }));
     }
   }, []);
 
   const openFile = useCallback(async (path: string) => {
     try {
-      // [SIMULATED]: In production, calls GET /api/workspace/read?path=...
       const response = await fetch(`/api/workspace/read?path=${encodeURIComponent(path)}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const content = await response.text();
+      
+      if (content.startsWith("ERROR:")) {
+        console.error("[WORKSPACE]: Backend error reading file", content);
+        return;
+      }
       
       setState(prev => ({
         ...prev,
@@ -70,7 +90,7 @@ export function useAppStore(initialCode: string) {
         proposedCode: "",
       }));
     } catch (err) {
-      console.error("Failed to read file", err);
+      console.error("[WORKSPACE]: Failed to read file", err);
     }
   }, []);
 
@@ -78,21 +98,29 @@ export function useAppStore(initialCode: string) {
     const savedProvider = localStorage.getItem('cp_inference_provider') as InferenceProvider;
     
     const fetchInitialData = async () => {
-      // Fetch initial key status
-      const mockStatus = {
-        openai: false,
-        anthropic: false,
-        gemini: false,
-        local: true
-      };
-      
-      setState(prev => ({
-        ...prev,
-        inferenceProvider: savedProvider || 'local',
-        keyStatus: mockStatus,
-      }));
+      try {
+        const response = await fetch('/api/settings/keys/status');
+        let mockStatus = {
+          openai: false,
+          anthropic: false,
+          gemini: false,
+          local: true
+        };
 
-      // Fetch file tree
+        if (response.ok) {
+          const status = await response.json();
+          mockStatus = { ...mockStatus, ...status };
+        }
+        
+        setState(prev => ({
+          ...prev,
+          inferenceProvider: savedProvider || 'local',
+          keyStatus: mockStatus,
+        }));
+      } catch (e) {
+        console.warn("[INIT]: Could not fetch key status, using defaults");
+      }
+
       fetchWorkspaceTree();
     };
 
@@ -107,12 +135,25 @@ export function useAppStore(initialCode: string) {
   }, []);
 
   const saveApiKey = useCallback(async (provider: string, key: string) => {
-    console.log(`[VAULT]: Sending key for ${provider} to backend vault...`);
-    setState(prev => ({
-      ...prev,
-      keyStatus: { ...prev.keyStatus, [provider]: true }
-    }));
-    return true;
+    try {
+      const response = await fetch('/api/settings/keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider, key })
+      });
+
+      if (response.ok) {
+        setState(prev => ({
+          ...prev,
+          keyStatus: { ...prev.keyStatus, [provider]: true }
+        }));
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error("[VAULT]: Failed to save key", err);
+      return false;
+    }
   }, []);
 
   const openDiff = useCallback((refactoredCode: string) => {
