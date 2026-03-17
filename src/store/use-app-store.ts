@@ -48,20 +48,21 @@ export function useAppStore(initialCode: string) {
       const response = await fetch('/api/workspace/tree');
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        console.warn(`[WORKSPACE]: Backend unreachable (Status ${response.status}). Ensure CaramelPepper backend is running.`);
+        setState(prev => ({ ...prev, fileTree: [], isFetchingTree: false }));
+        return;
       }
 
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
-        const text = await response.text();
-        console.warn("[WORKSPACE]: Received non-JSON response", text.substring(0, 100));
-        throw new Error("Expected JSON response from workspace API");
+        setState(prev => ({ ...prev, fileTree: [], isFetchingTree: false }));
+        return;
       }
 
       const data = await response.json();
       setState(prev => ({ ...prev, fileTree: data, isFetchingTree: false }));
     } catch (err) {
-      console.error("[WORKSPACE]: Failed to fetch tree", err);
+      console.error("[WORKSPACE]: Connection failed", err);
       setState(prev => ({ ...prev, fileTree: [], isFetchingTree: false }));
     }
   }, []);
@@ -71,13 +72,14 @@ export function useAppStore(initialCode: string) {
       const response = await fetch(`/api/workspace/read?path=${encodeURIComponent(path)}`);
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        console.warn(`[WORKSPACE]: Failed to read file ${path} (Status ${response.status})`);
+        return;
       }
 
       const content = await response.text();
       
       if (content.startsWith("ERROR:")) {
-        console.error("[WORKSPACE]: Backend error reading file", content);
+        console.error("[WORKSPACE]: Backend error", content);
         return;
       }
       
@@ -90,7 +92,7 @@ export function useAppStore(initialCode: string) {
         proposedCode: "",
       }));
     } catch (err) {
-      console.error("[WORKSPACE]: Failed to read file", err);
+      console.error("[WORKSPACE]: Connection error reading file", err);
     }
   }, []);
 

@@ -5,7 +5,6 @@ import React from "react"
 import { ShieldCheck, LayoutGrid, FileCode, Search, Database, History, Settings, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { FileExplorer } from "./FileExplorer"
-import { useAppStore } from "@/store/use-app-store"
 import { Button } from "@/components/ui/button"
 
 interface SidebarItemProps {
@@ -33,11 +32,23 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }: SidebarItemProps) =
 interface SidebarProps {
   onOpenSettings: () => void;
   activeProvider: string;
+  fileTree: any[];
+  activeFilePath: string | null;
+  isFetchingTree: boolean;
+  onRefreshTree: () => void;
+  onOpenFile: (path: string) => void;
 }
 
-export function Sidebar({ onOpenSettings, activeProvider }: SidebarProps) {
+export function Sidebar({ 
+  onOpenSettings, 
+  activeProvider,
+  fileTree,
+  activeFilePath,
+  isFetchingTree,
+  onRefreshTree,
+  onOpenFile
+}: SidebarProps) {
   const [activeTab, setActiveTab] = React.useState('editor')
-  const store = useAppStore(""); // In a real app, this would be passed or shared via Context
 
   return (
     <aside className="h-full flex flex-col bg-slate-950 border-r border-slate-800">
@@ -66,16 +77,16 @@ export function Sidebar({ onOpenSettings, activeProvider }: SidebarProps) {
               variant="ghost" 
               size="icon" 
               className="h-4 w-4 text-slate-500 hover:text-amber-500"
-              onClick={() => store.fetchWorkspaceTree()}
+              onClick={onRefreshTree}
             >
-              <RefreshCw className={cn("w-3 h-3", store.isFetchingTree && "animate-spin")} />
+              <RefreshCw className={cn("w-3 h-3", isFetchingTree && "animate-spin")} />
             </Button>
           </div>
           <div className="px-1">
             <FileExplorer 
-              items={store.fileTree} 
-              activePath={store.activeFilePath} 
-              onFileClick={store.openFile} 
+              items={fileTree} 
+              activePath={activeFilePath} 
+              onFileClick={onOpenFile} 
             />
           </div>
         </nav>

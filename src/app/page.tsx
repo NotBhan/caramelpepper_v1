@@ -77,6 +77,11 @@ export default function Dashboard() {
           <Sidebar 
             onOpenSettings={() => setIsSettingsOpen(true)} 
             activeProvider={store.inferenceProvider}
+            fileTree={store.fileTree}
+            activeFilePath={store.activeFilePath}
+            isFetchingTree={store.isFetchingTree}
+            onRefreshTree={store.fetchWorkspaceTree}
+            onOpenFile={store.openFile}
           />
         }
         editor={
@@ -85,6 +90,7 @@ export default function Dashboard() {
             onChange={store.setCode} 
             onAnalyze={handleAnalyze}
             isAnalyzing={isBusy}
+            title={store.activeFilePath?.split('/').pop() || "scratchpad.ts"}
           />
         }
         refactor={
