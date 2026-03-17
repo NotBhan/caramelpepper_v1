@@ -1,8 +1,8 @@
-
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
 import { type ComplexityMetrics, calculateComplexity } from "@/lib/complexity"
+import { MOCK_FILE_TREE } from "./mock-data"
 
 export type InferenceProvider = 'local' | 'anthropic' | 'openai' | 'gemini';
 
@@ -36,7 +36,7 @@ export function useAppStore(initialCode: string) {
       proposedMetrics: null,
       inferenceProvider: 'local',
       keyStatus: {},
-      fileTree: [],
+      fileTree: MOCK_FILE_TREE, // Initialize with mock data for prototyping
       activeFilePath: null,
       isFetchingTree: false,
     };
@@ -48,22 +48,22 @@ export function useAppStore(initialCode: string) {
       const response = await fetch('/api/workspace/tree');
       
       if (!response.ok) {
-        console.warn(`[WORKSPACE]: Backend unreachable (Status ${response.status}). Ensure CaramelPepper backend is running.`);
-        setState(prev => ({ ...prev, fileTree: [], isFetchingTree: false }));
+        console.warn(`[WORKSPACE]: Backend unreachable. Preserving mock tree.`);
+        setState(prev => ({ ...prev, isFetchingTree: false }));
         return;
       }
 
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
-        setState(prev => ({ ...prev, fileTree: [], isFetchingTree: false }));
+        setState(prev => ({ ...prev, isFetchingTree: false }));
         return;
       }
 
       const data = await response.json();
       setState(prev => ({ ...prev, fileTree: data, isFetchingTree: false }));
     } catch (err) {
-      console.error("[WORKSPACE]: Connection failed", err);
-      setState(prev => ({ ...prev, fileTree: [], isFetchingTree: false }));
+      console.error("[WORKSPACE]: Connection failed, using mock tree fallback", err);
+      setState(prev => ({ ...prev, isFetchingTree: false }));
     }
   }, []);
 
@@ -72,7 +72,16 @@ export function useAppStore(initialCode: string) {
       const response = await fetch(`/api/workspace/read?path=${encodeURIComponent(path)}`);
       
       if (!response.ok) {
-        console.warn(`[WORKSPACE]: Failed to read file ${path} (Status ${response.status})`);
+        // Fallback for prototyping when backend is not ready
+        const mockContent = `/**\n * Mock content for ${path}\n * Status: Disconnected from backend\n */\n\nvoid exampleFunction() {\n  // Logic for ${path.split('/').pop()} goes here\n}`;
+        setState(prev => ({
+          ...prev,
+          code: mockContent,
+          activeFilePath: path,
+          originalMetrics: calculateComplexity(mockContent),
+          isDiffOpen: false,
+          proposedCode: "",
+        }));
         return;
       }
 
@@ -153,7 +162,6 @@ export function useAppStore(initialCode: string) {
       }
       return false;
     } catch (err) {
-      console.error("[VAULT]: Failed to save key", err);
       return false;
     }
   }, []);

@@ -1,11 +1,11 @@
-
 "use client"
 
 import React from "react"
-import { ShieldCheck, LayoutGrid, FileCode, Search, Database, History, Settings, RefreshCw } from "lucide-react"
+import { ShieldCheck, LayoutGrid, FileCode, Search, Database, History, Settings, RefreshCw, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { FileExplorer } from "./FileExplorer"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 
 interface SidebarItemProps {
   icon: React.ElementType;
@@ -72,7 +72,13 @@ export function Sidebar({
 
         <nav className="space-y-1">
           <div className="flex items-center justify-between mb-2 px-3">
-            <div className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Project Files</div>
+            <div className="flex items-center gap-2">
+              <div className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Project Files</div>
+              <Badge variant="outline" className="h-4 px-1 text-[8px] border-slate-700 text-slate-500 gap-1">
+                <AlertCircle className="w-2 h-2" />
+                MOCK
+              </Badge>
+            </div>
             <Button 
               variant="ghost" 
               size="icon" 
