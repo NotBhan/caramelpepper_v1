@@ -130,8 +130,6 @@ export function useAppStore(initialCode: string) {
         content = await response.text();
       }
       
-      if (content.startsWith("ERROR:")) return;
-      
       setState(prev => ({
         ...prev,
         code: content,
@@ -142,7 +140,7 @@ export function useAppStore(initialCode: string) {
         isDirty: false,
       }));
     } catch (err) {
-      console.error("[WORKSPACE]: Connection error reading file", err);
+      console.error("[WORKSPACE]: Error reading file", err);
     }
   }, []);
 
