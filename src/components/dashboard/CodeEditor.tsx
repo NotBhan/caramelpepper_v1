@@ -47,7 +47,7 @@ export function CodeEditor({
               className="h-8 gap-2 bg-amber-600 hover:bg-amber-500 text-slate-900 font-bold shadow-lg shadow-amber-900/20"
             >
               <Layers className={cn("w-3 h-3", isAnalyzing && "animate-spin")} />
-              {isAnalyzing ? "Processing..." : "Analyze"}
+              {isAnalyzing ? "Processing..." : "Optimize"}
             </Button>
           </div>
         )}
