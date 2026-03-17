@@ -25,6 +25,7 @@ export interface AppState {
   activeFilePath: string | null;
   isFetchingTree: boolean;
   isDirty: boolean;
+  workspaceRoot: string | null;
 }
 
 export function useAppStore(initialCode: string) {
@@ -41,6 +42,7 @@ export function useAppStore(initialCode: string) {
       activeFilePath: null,
       isFetchingTree: false,
       isDirty: false,
+      workspaceRoot: null,
     };
   });
 
@@ -60,6 +62,29 @@ export function useAppStore(initialCode: string) {
     } catch (err) {
       setState(prev => ({ ...prev, isFetchingTree: false }));
     }
+  }, []);
+
+  const setWorkspaceRoot = useCallback(async (path: string) => {
+    try {
+      const response = await fetch('/api/workspace/set_root', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path })
+      });
+
+      if (response.ok) {
+        setState(prev => ({ ...prev, workspaceRoot: path }));
+        await fetchWorkspaceTree(path);
+        return true;
+      }
+      return false;
+    } catch (err) {
+      return false;
+    }
+  }, [fetchWorkspaceTree]);
+
+  const resetWorkspaceRoot = useCallback(() => {
+    setState(prev => ({ ...prev, workspaceRoot: null, fileTree: [] }));
   }, []);
 
   const openLocalFile = useCallback(async () => {
@@ -90,52 +115,6 @@ export function useAppStore(initialCode: string) {
       }));
     } catch (err) {
       console.log("File selection cancelled");
-    }
-  }, []);
-
-  const openLocalFolder = useCallback(async () => {
-    try {
-      // @ts-ignore
-      const dirHandle = await window.showDirectoryPicker();
-      setState(prev => ({ ...prev, isFetchingTree: true }));
-
-      const buildTree = async (handle: FileSystemDirectoryHandle, path: string): Promise<FileItem> => {
-        const children: FileItem[] = [];
-        // @ts-ignore
-        for await (const entry of handle.values()) {
-          const entryPath = `${path}/${entry.name}`;
-          if (entry.kind === 'directory') {
-            children.push(await buildTree(entry, entryPath));
-          } else {
-            children.push({
-              name: entry.name,
-              path: entryPath,
-              is_dir: false,
-              handle: entry
-            });
-          }
-        }
-        return {
-          name: handle.name,
-          path,
-          is_dir: true,
-          children: children.sort((a, b) => {
-            if (a.is_dir !== b.is_dir) return a.is_dir ? -1 : 1;
-            return a.name.localeCompare(b.name);
-          }),
-          handle
-        };
-      };
-
-      const root = await buildTree(dirHandle, dirHandle.name);
-      setState(prev => ({
-        ...prev,
-        fileTree: [root],
-        isFetchingTree: false
-      }));
-    } catch (err) {
-      console.log("Directory selection cancelled");
-      setState(prev => ({ ...prev, isFetchingTree: false }));
     }
   }, []);
 
@@ -196,12 +175,12 @@ export function useAppStore(initialCode: string) {
           activeFilePath: newPath,
           isDirty: false 
         }));
-        fetchWorkspaceTree();
+        fetchWorkspaceTree(state.workspaceRoot || undefined);
       }
     } catch (err) {
       console.error("[WORKSPACE]: Save As failed", err);
     }
-  }, [state.code, fetchWorkspaceTree]);
+  }, [state.code, state.workspaceRoot, fetchWorkspaceTree]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -212,10 +191,9 @@ export function useAppStore(initialCode: string) {
           setState(prev => ({ ...prev, keyStatus: status }));
         }
       } catch (e) {}
-      fetchWorkspaceTree();
     };
     fetchInitialData();
-  }, [fetchWorkspaceTree]);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -301,10 +279,11 @@ export function useAppStore(initialCode: string) {
     setInferenceProvider,
     saveApiKey,
     fetchWorkspaceTree,
+    setWorkspaceRoot,
+    resetWorkspaceRoot,
     openFile,
     saveActiveFile,
     saveFileAs,
     openLocalFile,
-    openLocalFolder,
   };
 }

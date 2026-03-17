@@ -28,8 +28,8 @@ export function MenuBar() {
     await store.openLocalFile();
   }
 
-  const handleOpenFolder = async () => {
-    await store.openLocalFolder();
+  const handleOpenFolder = () => {
+    store.resetWorkspaceRoot();
   }
 
   return (

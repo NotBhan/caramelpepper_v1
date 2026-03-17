@@ -1,12 +1,15 @@
-
 #include "crow.h"
 #include "api/fs_handlers.cpp"
 #include "api/handlers.cpp"
+#include <mutex>
 
 /**
  * @file main.cpp
  * @brief Entry point for the CaramelPepper C++ backend server.
  */
+
+static std::string currentWorkspaceRoot = "";
+static std::mutex rootMutex;
 
 int main() {
     crow::SimpleApp app;
@@ -40,9 +43,28 @@ int main() {
     });
 
     // Workspace/Filesystem Endpoints
+    CROW_ROUTE(app, "/api/workspace/set_root").methods(crow::HTTPMethod::POST)([](const crow::request& req) {
+        auto x = crow::json::load(req.body);
+        if (!x || !x.has("path")) return crow::response(400);
+        
+        std::string path = x["path"].s();
+        if (!std::filesystem::exists(path)) {
+            return crow::response(404, "Path does not exist");
+        }
+
+        std::lock_guard<std::mutex> lock(rootMutex);
+        currentWorkspaceRoot = path;
+        return crow::response(200);
+    });
+
     CROW_ROUTE(app, "/api/workspace/tree")([](const crow::request& req) {
-        auto path = req.url_params.get("path");
-        return crow::response(CaramelPepper::API::handleGetWorkspaceTree(path ? path : ""));
+        std::string root;
+        {
+            std::lock_guard<std::mutex> lock(rootMutex);
+            root = currentWorkspaceRoot;
+        }
+        auto pathParam = req.url_params.get("path");
+        return crow::response(CaramelPepper::API::handleGetWorkspaceTree(pathParam ? pathParam : root));
     });
 
     CROW_ROUTE(app, "/api/workspace/read")([](const crow::request& req) {

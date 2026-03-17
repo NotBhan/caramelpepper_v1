@@ -11,7 +11,7 @@ namespace CaramelPepper::API {
 namespace fs = std::filesystem;
 using json = nlohmann::json;
 
-const std::set<std::string> IGNORE_LIST = {".git", "node_modules", "build", ".gguf", ".next", "out"};
+const std::set<std::string> IGNORE_LIST = {".git", "node_modules", "build", ".gguf", ".next", "out", ".cache"};
 
 json buildTree(const fs::path& path) {
     json result = json::array();
@@ -35,7 +35,8 @@ json buildTree(const fs::path& path) {
 
             result.push_back(item);
         }
-    } catch (const fs::filesystem_error& e) {
+    } catch (const std::exception& e) {
+        // Silently skip inaccessible directories
     }
 
     std::sort(result.begin(), result.end(), [](const json& a, const json& b) {
@@ -47,7 +48,9 @@ json buildTree(const fs::path& path) {
 }
 
 std::string handleGetWorkspaceTree(const std::string& rootPath = "") {
-    fs::path root = rootPath.empty() ? fs::current_path() : fs::path(rootPath);
+    if (rootPath.empty()) return "[]";
+    fs::path root(rootPath);
+    if (!fs::exists(root)) return "[]";
     return buildTree(root).dump();
 }
 

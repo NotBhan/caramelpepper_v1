@@ -14,6 +14,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { useToast } from "@/hooks/use-toast"
 import { SettingsModal } from "@/components/dashboard/SettingsModal"
 import { MenuBar } from "@/components/dashboard/MenuBar"
+import { WorkspacePickerModal } from "@/components/dashboard/WorkspacePickerModal"
 
 const DEFAULT_CODE = `function processData(data: any[]) {
   let results = [];
@@ -82,7 +83,7 @@ export default function Dashboard() {
               fileTree={store.fileTree}
               activeFilePath={store.activeFilePath}
               isFetchingTree={store.isFetchingTree}
-              onRefreshTree={() => store.fetchWorkspaceTree()}
+              onRefreshTree={() => store.fetchWorkspaceTree(store.workspaceRoot || undefined)}
               onOpenFile={store.openFile}
             />
           }
@@ -122,6 +123,11 @@ export default function Dashboard() {
         />
       </div>
       
+      <WorkspacePickerModal 
+        isOpen={store.workspaceRoot === null}
+        onSelect={store.setWorkspaceRoot}
+      />
+
       <SettingsModal 
         isOpen={isSettingsOpen}
         onOpenChange={setIsSettingsOpen}
