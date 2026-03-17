@@ -2,8 +2,11 @@
 "use client"
 
 import React from "react"
-import { ShieldCheck, LayoutGrid, FileCode, Search, Database, History, Settings, ChevronDown, Folder } from "lucide-react"
+import { ShieldCheck, LayoutGrid, FileCode, Search, Database, History, Settings, RefreshCw } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { FileExplorer } from "./FileExplorer"
+import { useAppStore } from "@/store/use-app-store"
+import { Button } from "@/components/ui/button"
 
 interface SidebarItemProps {
   icon: React.ElementType;
@@ -34,6 +37,7 @@ interface SidebarProps {
 
 export function Sidebar({ onOpenSettings, activeProvider }: SidebarProps) {
   const [activeTab, setActiveTab] = React.useState('editor')
+  const store = useAppStore(""); // In a real app, this would be passed or shared via Context
 
   return (
     <aside className="h-full flex flex-col bg-slate-950 border-r border-slate-800">
@@ -56,21 +60,23 @@ export function Sidebar({ onOpenSettings, activeProvider }: SidebarProps) {
         </nav>
 
         <nav className="space-y-1">
-          <div className="text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-2 px-3">Project Files</div>
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-2 px-3 py-1 text-[13px] text-slate-400">
-              <ChevronDown className="w-3 h-3" />
-              <Folder className="w-3.5 h-3.5 text-amber-500/50" />
-              <span>src</span>
-            </div>
-            <div className="ml-6 flex items-center gap-2 px-3 py-1 text-[13px] text-amber-500 bg-amber-500/5 rounded-sm border-l border-amber-500">
-              <FileCode className="w-3.5 h-3.5" />
-              <span>scratchpad.ts</span>
-            </div>
-            <div className="ml-6 flex items-center gap-2 px-3 py-1 text-[13px] text-slate-500 hover:text-slate-300 cursor-pointer">
-              <FileCode className="w-3.5 h-3.5" />
-              <span>utils.ts</span>
-            </div>
+          <div className="flex items-center justify-between mb-2 px-3">
+            <div className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Project Files</div>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-4 w-4 text-slate-500 hover:text-amber-500"
+              onClick={() => store.fetchWorkspaceTree()}
+            >
+              <RefreshCw className={cn("w-3 h-3", store.isFetchingTree && "animate-spin")} />
+            </Button>
+          </div>
+          <div className="px-1">
+            <FileExplorer 
+              items={store.fileTree} 
+              activePath={store.activeFilePath} 
+              onFileClick={store.openFile} 
+            />
           </div>
         </nav>
 

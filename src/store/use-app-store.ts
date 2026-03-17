@@ -6,6 +6,13 @@ import { type ComplexityMetrics, calculateComplexity } from "@/lib/complexity"
 
 export type InferenceProvider = 'local' | 'anthropic' | 'openai' | 'gemini';
 
+export type FileItem = {
+  name: string;
+  path: string;
+  is_dir: boolean;
+  children?: FileItem[];
+};
+
 export interface AppState {
   code: string;
   isDiffOpen: boolean;
@@ -13,7 +20,10 @@ export interface AppState {
   originalMetrics: ComplexityMetrics | null;
   proposedMetrics: ComplexityMetrics | null;
   inferenceProvider: InferenceProvider;
-  keyStatus: Record<string, boolean>; // Replaces plaintext apiKeys
+  keyStatus: Record<string, boolean>;
+  fileTree: FileItem[];
+  activeFilePath: string | null;
+  isFetchingTree: boolean;
 }
 
 export function useAppStore(initialCode: string) {
@@ -26,15 +36,49 @@ export function useAppStore(initialCode: string) {
       proposedMetrics: null,
       inferenceProvider: 'local',
       keyStatus: {},
+      fileTree: [],
+      activeFilePath: null,
+      isFetchingTree: false,
     };
   });
+
+  const fetchWorkspaceTree = useCallback(async () => {
+    setState(prev => ({ ...prev, isFetchingTree: true }));
+    try {
+      // [SIMULATED]: In production, calls GET /api/workspace/tree
+      const response = await fetch('/api/workspace/tree');
+      const data = await response.json();
+      setState(prev => ({ ...prev, fileTree: data, isFetchingTree: false }));
+    } catch (err) {
+      console.error("Failed to fetch workspace tree", err);
+      setState(prev => ({ ...prev, isFetchingTree: false }));
+    }
+  }, []);
+
+  const openFile = useCallback(async (path: string) => {
+    try {
+      // [SIMULATED]: In production, calls GET /api/workspace/read?path=...
+      const response = await fetch(`/api/workspace/read?path=${encodeURIComponent(path)}`);
+      const content = await response.text();
+      
+      setState(prev => ({
+        ...prev,
+        code: content,
+        activeFilePath: path,
+        originalMetrics: calculateComplexity(content),
+        isDiffOpen: false,
+        proposedCode: "",
+      }));
+    } catch (err) {
+      console.error("Failed to read file", err);
+    }
+  }, []);
 
   useEffect(() => {
     const savedProvider = localStorage.getItem('cp_inference_provider') as InferenceProvider;
     
-    // Simulate initial status fetch from backend
-    const fetchStatus = async () => {
-      // [SIMULATED]: In production, calls GET /settings/keys/status
+    const fetchInitialData = async () => {
+      // Fetch initial key status
       const mockStatus = {
         openai: false,
         anthropic: false,
@@ -47,10 +91,13 @@ export function useAppStore(initialCode: string) {
         inferenceProvider: savedProvider || 'local',
         keyStatus: mockStatus,
       }));
+
+      // Fetch file tree
+      fetchWorkspaceTree();
     };
 
-    fetchStatus();
-  }, []);
+    fetchInitialData();
+  }, [fetchWorkspaceTree]);
 
   const setInferenceProvider = useCallback((provider: InferenceProvider) => {
     setState(prev => {
@@ -60,15 +107,12 @@ export function useAppStore(initialCode: string) {
   }, []);
 
   const saveApiKey = useCallback(async (provider: string, key: string) => {
-    // [SIMULATED]: In production, calls POST /settings/keys
     console.log(`[VAULT]: Sending key for ${provider} to backend vault...`);
-    
     setState(prev => ({
       ...prev,
       keyStatus: { ...prev.keyStatus, [provider]: true }
     }));
-    
-    return true; // Return success to UI
+    return true;
   }, []);
 
   const openDiff = useCallback((refactoredCode: string) => {
@@ -120,5 +164,7 @@ export function useAppStore(initialCode: string) {
     rejectRefactor,
     setInferenceProvider,
     saveApiKey,
+    fetchWorkspaceTree,
+    openFile,
   };
 }
