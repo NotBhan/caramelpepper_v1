@@ -27,12 +27,13 @@ export function WorkspacePickerModal({ isOpen, onSelect }: WorkspacePickerModalP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!path.trim()) return
+    const trimmedPath = path.trim()
+    if (!trimmedPath) return
 
     setError(null)
     setIsSubmitting(true)
     
-    const success = await onSelect(path.trim())
+    const success = await onSelect(trimmedPath)
     
     if (!success) {
       setError("Failed to open workspace. Ensure the absolute path is correct and accessible by the backend.")
@@ -62,7 +63,7 @@ export function WorkspacePickerModal({ isOpen, onSelect }: WorkspacePickerModalP
             </Label>
             <Input
               id="path"
-              placeholder="e.g., /home/user/my-project"
+              placeholder="e.g., C:/Projects/App or /home/user/app"
               value={path}
               onChange={(e) => setPath(e.target.value)}
               className="bg-[#1e1e1e] border-[#3c3c3c] focus:ring-[#007acc] h-10 text-[#ffffff]"

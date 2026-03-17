@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
+import { normalizeAbsolutePath } from '@/lib/path-utils';
 
 /**
  * Reads the content of a file from the filesystem.
  */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const filePath = searchParams.get('path');
+  const rawPath = searchParams.get('path');
   
-  if (!filePath) {
+  if (!rawPath) {
     return NextResponse.json({ error: 'Missing path parameter' }, { status: 400 });
   }
+
+  const filePath = normalizeAbsolutePath(rawPath);
   
   try {
     const content = await fs.readFile(filePath, 'utf-8');
