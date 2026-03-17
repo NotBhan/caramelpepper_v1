@@ -40,6 +40,22 @@ export function DiffViewer({
   const cyc = getImprovement('cyclomatic');
   const cog = getImprovement('cognitive');
 
+  // Stable options to prevent unnecessary re-renders of the editor widget
+  const editorOptions = React.useMemo(() => ({
+    renderSideBySide: true,
+    readOnly: true,
+    fontSize: 13,
+    minimap: { enabled: false },
+    scrollBeyondLastLine: false,
+    automaticLayout: true,
+    padding: { top: 16 },
+    fontFamily: 'Source Code Pro, monospace',
+    wordWrap: 'on' as const,
+    backgroundColor: '#0f172a',
+    folding: true,
+    lineNumbers: 'on' as const,
+  }), []);
+
   return (
     <div className="flex flex-col h-full bg-[#0f172a] relative">
       <div className="flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-900/80">
@@ -86,18 +102,10 @@ export function DiffViewer({
           modified={modified}
           language="typescript"
           theme="vs-dark"
-          options={{
-            renderSideBySide: true,
-            readOnly: true,
-            fontSize: 13,
-            minimap: { enabled: false },
-            scrollBeyondLastLine: false,
-            automaticLayout: true,
-            padding: { top: 16 },
-            fontFamily: 'Source Code Pro, monospace',
-            wordWrap: 'on',
-            backgroundColor: '#0f172a'
-          }}
+          options={editorOptions}
+          // Using unique model paths helps Monaco manage internal buffers during unmounting
+          originalModelPath="file:///original-source.ts"
+          modifiedModelPath="file:///refactored-source.ts"
         />
       </div>
 
