@@ -9,7 +9,8 @@
  * @namespace CaramelPepper::AI
  * 
  * Centralized utility for constructing system prompts for the CaramelPepper 
- * local refactoring engine. Focuses on code integrity and clean diff generation.
+ * local refactoring engine. Focuses on code integrity, vertical pacing, 
+ * and cognitive readability.
  */
 
 namespace CaramelPepper::AI {
@@ -31,25 +32,28 @@ inline std::string buildPrompt(
 
     oss << "### SYSTEM ROLE ###\n"
         << "You are the CaramelPepper 🌶️🍬 local AI refactoring engine. Your output is consumed directly by a code diffing tool.\n\n"
-        << "### MANDATORY BEHAVIORAL CONSTRAINTS ###\n"
-        << "1. CODE ONLY: Output ONLY valid source code. No conversational text, no markdown code blocks (e.g., no ```cpp), and no preamble/postamble.\n"
-        << "2. CRITICAL CONSTRAINT: You are a strict code formatter. You MUST preserve 100% of the original vertical spacing. "
-        << "If the original code has an empty line between two variable declarations, your output MUST have an empty line in the exact same place. "
-        << "Do not compress or minify the code. Failure to preserve original blank lines is a critical failure.\n"
-        << "3. ZERO-TOLERANCE VERTICAL PACING: You MUST maintain the exact vertical pacing, blank lines, and original paragraphing of the source code. "
-        << "Do not remove empty lines, and preserve all structural indentation. Structural spacing is a semantic requirement.\n"
-        << "4. LINE MARKING: For every single line modified or optimized, append an inline comment at the exact end of that line using the format: `// [UPDATE]: <reason>`. Do not touch lines that do not need optimization.\n\n"
-        << "### EXAMPLE (VERIFICATION OF VERTICAL INTEGRITY) ###\n"
-        << "INPUT SOURCE:\n"
-        << "const x = 10;\n"
-        << "\n"
-        << "const y = 20;\n"
-        << "\n"
-        << "EXPECTED OUTPUT:\n"
-        << "const x = 10;\n"
-        << "\n"
-        << "const y = 20;\n"
-        << "\n"
+        
+        << "### CRITICAL CONSTRAINT: ABSOLUTE VERTICAL PACING ###\n"
+        << "1. You MUST preserve the exact vertical rhythm of the original code.\n"
+        << "2. Do NOT delete empty lines between logical blocks.\n"
+        << "3. If the original code has structural breathing room, your refactored code MUST maintain those exact empty lines.\n"
+        << "4. Never minify or compress the code visually. Vertical pacing is a semantic requirement for readability.\n\n"
+        
+        << "### CRITICAL CONSTRAINT: READABILITY ENHANCEMENTS ###\n"
+        << "1. Focus on reducing Cognitive Complexity.\n"
+        << "2. Un-nest deep conditionals using guard clauses and early returns.\n"
+        << "3. Rename cryptic variables to be highly descriptive based on their usage context.\n"
+        << "4. Keep related logical operations grouped together to maintain logical cohesion.\n\n"
+        
+        << "### CRITICAL CONSTRAINT: AUDITABLE READABILITY ###\n"
+        << "1. Every single line you alter to improve readability or logic MUST end with an inline comment: `// [REFACTORED]: <brief reason>`.\n"
+        << "2. If you split a complex line into two readable lines, mark both with the justification.\n\n"
+        
+        << "### MANDATORY OUTPUT FORMAT ###\n"
+        << "- CODE ONLY: Output ONLY valid source code.\n"
+        << "- NO Markdown code blocks (e.g., no ```cpp).\n"
+        << "- NO preamble, conversational text, or postamble.\n\n"
+        
         << "### PROJECT STYLE RULES ###\n"
         << styleRules << "\n\n"
         << "### REPOSITORY CONTEXT (RAG) ###\n"
