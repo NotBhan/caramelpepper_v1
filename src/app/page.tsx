@@ -14,6 +14,7 @@ import { localCodeRefactoring } from "@/ai/flows/local-code-refactoring"
 import { Toaster } from "@/components/ui/toaster"
 import { useToast } from "@/hooks/use-toast"
 import { SettingsModal } from "@/components/dashboard/SettingsModal"
+import { MenuBar } from "@/components/dashboard/MenuBar"
 
 const DEFAULT_CODE = `function processData(data: any[]) {
   let results = [];
@@ -70,54 +71,57 @@ export default function Dashboard() {
   }
 
   return (
-    <>
-      <WorkspaceLayout
-        isDiffOpen={store.isDiffOpen}
-        sidebar={
-          <Sidebar 
-            onOpenSettings={() => setIsSettingsOpen(true)} 
-            activeProvider={store.inferenceProvider}
-            fileTree={store.fileTree}
-            activeFilePath={store.activeFilePath}
-            isFetchingTree={store.isFetchingTree}
-            onRefreshTree={store.fetchWorkspaceTree}
-            onOpenFile={store.openFile}
-          />
-        }
-        editor={
-          <CodeEditor 
-            value={store.code} 
-            onChange={store.setCode} 
-            onAnalyze={handleAnalyze}
-            isAnalyzing={isBusy}
-            title={store.activeFilePath?.split('/').pop() || "scratchpad.ts"}
-          />
-        }
-        refactor={
-          <DiffViewer 
-            original={store.code}
-            modified={store.proposedCode}
-            originalMetrics={store.originalMetrics}
-            proposedMetrics={store.proposedMetrics}
-            onAccept={store.acceptRefactor}
-            onReject={store.rejectRefactor}
-          />
-        }
-        analysis={
-          <AnalysisPanel 
-            metrics={store.originalMetrics} 
-            style={styleReport}
-            isAnalyzing={isBusy}
-          />
-        }
-        bottom={
-          <RefactorPanel 
-            suggestions={null} 
-            isRefactoring={isBusy}
-            onApply={() => {}}
-          />
-        }
-      />
+    <div className="flex flex-col h-screen overflow-hidden">
+      <MenuBar />
+      <div className="flex-1">
+        <WorkspaceLayout
+          isDiffOpen={store.isDiffOpen}
+          sidebar={
+            <Sidebar 
+              onOpenSettings={() => setIsSettingsOpen(true)} 
+              activeProvider={store.inferenceProvider}
+              fileTree={store.fileTree}
+              activeFilePath={store.activeFilePath}
+              isFetchingTree={store.isFetchingTree}
+              onRefreshTree={() => store.fetchWorkspaceTree()}
+              onOpenFile={store.openFile}
+            />
+          }
+          editor={
+            <CodeEditor 
+              value={store.code} 
+              onChange={store.setCode} 
+              onAnalyze={handleAnalyze}
+              isAnalyzing={isBusy}
+              title={store.activeFilePath?.split('/').pop() || "scratchpad.ts"}
+            />
+          }
+          refactor={
+            <DiffViewer 
+              original={store.code}
+              modified={store.proposedCode}
+              originalMetrics={store.originalMetrics}
+              proposedMetrics={store.proposedMetrics}
+              onAccept={store.acceptRefactor}
+              onReject={store.rejectRefactor}
+            />
+          }
+          analysis={
+            <AnalysisPanel 
+              metrics={store.originalMetrics} 
+              style={styleReport}
+              isAnalyzing={isBusy}
+            />
+          }
+          bottom={
+            <RefactorPanel 
+              suggestions={null} 
+              isRefactoring={isBusy}
+              onApply={() => {}}
+            />
+          }
+        />
+      </div>
       
       <SettingsModal 
         isOpen={isSettingsOpen}
@@ -129,6 +133,6 @@ export default function Dashboard() {
       />
       
       <Toaster />
-    </>
+    </div>
   )
 }

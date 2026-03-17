@@ -40,14 +40,25 @@ int main() {
     });
 
     // Workspace/Filesystem Endpoints
-    CROW_ROUTE(app, "/api/workspace/tree")([]() {
-        return crow::response(CaramelPepper::API::handleGetWorkspaceTree());
+    CROW_ROUTE(app, "/api/workspace/tree")([](const crow::request& req) {
+        auto path = req.url_params.get("path");
+        return crow::response(CaramelPepper::API::handleGetWorkspaceTree(path ? path : ""));
     });
 
     CROW_ROUTE(app, "/api/workspace/read")([](const crow::request& req) {
         auto path = req.url_params.get("path");
         if (!path) return crow::response(400, "Missing path parameter");
         return crow::response(CaramelPepper::API::handleReadFile(path));
+    });
+
+    CROW_ROUTE(app, "/api/workspace/save").methods(crow::HTTPMethod::POST)([](const crow::request& req) {
+        auto x = crow::json::load(req.body);
+        if (!x) return crow::response(400);
+        
+        std::string path = x["path"].s();
+        std::string content = x["content"].s();
+        
+        return CaramelPepper::API::handleSaveFile(path, content) ? crow::response(200) : crow::response(500);
     });
 
     app.port(18080).multithreaded().run();

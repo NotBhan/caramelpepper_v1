@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
@@ -24,6 +25,7 @@ export interface AppState {
   fileTree: FileItem[];
   activeFilePath: string | null;
   isFetchingTree: boolean;
+  isDirty: boolean;
 }
 
 const COMPLEX_TEST_CODE = `function handleRequest(req: any, res: any) {
@@ -88,13 +90,15 @@ export function useAppStore(initialCode: string) {
       fileTree: MOCK_FILE_TREE,
       activeFilePath: null,
       isFetchingTree: false,
+      isDirty: false,
     };
   });
 
-  const fetchWorkspaceTree = useCallback(async () => {
+  const fetchWorkspaceTree = useCallback(async (path?: string) => {
     setState(prev => ({ ...prev, isFetchingTree: true }));
     try {
-      const response = await fetch('/api/workspace/tree');
+      const url = path ? `/api/workspace/tree?path=${encodeURIComponent(path)}` : '/api/workspace/tree';
+      const response = await fetch(url);
       
       if (!response.ok) {
         setState(prev => ({ ...prev, isFetchingTree: false }));
@@ -119,7 +123,6 @@ export function useAppStore(initialCode: string) {
       const response = await fetch(`/api/workspace/read?path=${encodeURIComponent(path)}`);
       
       if (!response.ok) {
-        // Fallback for prototyping when backend is not ready
         let mockContent = `/**\n * Mock content for ${path}\n * Status: Disconnected from backend\n */\n\nvoid exampleFunction() {\n  // Logic for ${path.split('/').pop()} goes here\n}`;
         
         if (path === 'src/core/complex-module.ts') {
@@ -133,6 +136,7 @@ export function useAppStore(initialCode: string) {
           originalMetrics: calculateComplexity(mockContent),
           isDiffOpen: false,
           proposedCode: "",
+          isDirty: false,
         }));
         return;
       }
@@ -150,15 +154,50 @@ export function useAppStore(initialCode: string) {
         originalMetrics: calculateComplexity(content),
         isDiffOpen: false,
         proposedCode: "",
+        isDirty: false,
       }));
     } catch (err) {
       console.error("[WORKSPACE]: Connection error reading file", err);
     }
   }, []);
 
+  const saveActiveFile = useCallback(async () => {
+    if (!state.activeFilePath) return;
+    try {
+      const response = await fetch('/api/workspace/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: state.activeFilePath, content: state.code })
+      });
+      if (response.ok) {
+        setState(prev => ({ ...prev, isDirty: false }));
+      }
+    } catch (err) {
+      console.error("[WORKSPACE]: Save failed", err);
+    }
+  }, [state.activeFilePath, state.code]);
+
+  const saveFileAs = useCallback(async (newPath: string) => {
+    try {
+      const response = await fetch('/api/workspace/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: newPath, content: state.code })
+      });
+      if (response.ok) {
+        setState(prev => ({ 
+          ...prev, 
+          activeFilePath: newPath,
+          isDirty: false 
+        }));
+        fetchWorkspaceTree(); // Refresh tree to show new file
+      }
+    } catch (err) {
+      console.error("[WORKSPACE]: Save As failed", err);
+    }
+  }, [state.code, fetchWorkspaceTree]);
+
   useEffect(() => {
-    const savedProvider = localStorage.getItem('cp_inference_provider') as InferenceProvider;
-    
     const fetchInitialData = async () => {
       try {
         const response = await fetch('/api/settings/keys/status');
@@ -176,11 +215,10 @@ export function useAppStore(initialCode: string) {
         
         setState(prev => ({
           ...prev,
-          inferenceProvider: savedProvider || 'local',
           keyStatus: mockStatus,
         }));
       } catch (e) {
-        console.warn("[INIT]: Could not fetch key status, using defaults");
+        console.warn("[INIT]: Could not fetch key status");
       }
 
       fetchWorkspaceTree();
@@ -189,11 +227,20 @@ export function useAppStore(initialCode: string) {
     fetchInitialData();
   }, [fetchWorkspaceTree]);
 
+  // Keyboard Shortcuts Listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        saveActiveFile();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [saveActiveFile]);
+
   const setInferenceProvider = useCallback((provider: InferenceProvider) => {
-    setState(prev => {
-      localStorage.setItem('cp_inference_provider', provider);
-      return { ...prev, inferenceProvider: provider };
-    });
+    setState(prev => ({ ...prev, inferenceProvider: provider }));
   }, []);
 
   const saveApiKey = useCallback(async (provider: string, key: string) => {
@@ -238,6 +285,7 @@ export function useAppStore(initialCode: string) {
       proposedCode: "",
       originalMetrics: prev.proposedMetrics,
       proposedMetrics: null,
+      isDirty: true,
     }));
   }, []);
 
@@ -255,6 +303,7 @@ export function useAppStore(initialCode: string) {
       ...prev,
       code: newCode,
       originalMetrics: calculateComplexity(newCode),
+      isDirty: true,
     }));
   }, []);
 
@@ -268,5 +317,7 @@ export function useAppStore(initialCode: string) {
     saveApiKey,
     fetchWorkspaceTree,
     openFile,
+    saveActiveFile,
+    saveFileAs,
   };
 }

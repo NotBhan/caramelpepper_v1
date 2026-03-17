@@ -9,7 +9,7 @@
 
 /**
  * @file fs_handlers.cpp
- * @brief Filesystem API handlers for workspace navigation and file reading.
+ * @brief Filesystem API handlers for workspace navigation, file reading, and writing.
  */
 
 namespace CaramelPepper::API {
@@ -27,6 +27,8 @@ json buildTree(const fs::path& path) {
     json result = json::array();
     
     try {
+        if (!fs::exists(path)) return result;
+
         for (const auto& entry : fs::directory_iterator(path)) {
             std::string name = entry.path().filename().string();
             
@@ -60,9 +62,8 @@ json buildTree(const fs::path& path) {
 /**
  * Handler for GET /api/workspace/tree
  */
-std::string handleGetWorkspaceTree() {
-    // [SIMULATED]: In a real local desktop app, this is the CWD or project root
-    fs::path root = fs::current_path();
+std::string handleGetWorkspaceTree(const std::string& rootPath = "") {
+    fs::path root = rootPath.empty() ? fs::current_path() : fs::path(rootPath);
     return buildTree(root).dump();
 }
 
@@ -88,6 +89,33 @@ std::string handleReadFile(const std::string& filePath) {
     std::string content((std::istreambuf_iterator<char>(file)),
                        std::istreambuf_iterator<char>());
     return content;
+}
+
+/**
+ * Handler for POST /api/workspace/save
+ */
+bool handleSaveFile(const std::string& filePath, const std::string& content) {
+    if (filePath.empty()) return false;
+    
+    // Basic Path Traversal Protection
+    if (filePath.find("..") != std::string::npos) return false;
+
+    try {
+        fs::path p(filePath);
+        // Ensure parent directory exists
+        if (p.has_parent_path()) {
+            fs::create_directories(p.parent_path());
+        }
+
+        std::ofstream file(p, std::ios::out | std::ios::binary | std::ios::trunc);
+        if (!file.is_open()) return false;
+
+        file << content;
+        file.close();
+        return true;
+    } catch (const std::exception& e) {
+        return false;
+    }
 }
 
 } // namespace CaramelPepper::API
