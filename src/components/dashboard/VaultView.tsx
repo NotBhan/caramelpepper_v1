@@ -1,9 +1,48 @@
+
 "use client"
 
 import React from "react"
-import { Database, Lock, ShieldCheck, Key } from "lucide-react"
+import { Database, Lock, ShieldCheck, Key, Github, Loader2 } from "lucide-react"
+import { useAppStore } from "@/store/use-app-store"
+import { Button } from "@/components/ui/button"
 
 export function VaultView() {
+  const store = useAppStore();
+
+  if (store.loadingAuth) {
+    return (
+      <div className="h-full w-full bg-[#1e1e1e] flex flex-col items-center justify-center gap-4">
+        <Loader2 className="w-8 h-8 text-[#007acc] animate-spin" />
+        <p className="text-sm text-[#858585]">Verifying Identity...</p>
+      </div>
+    );
+  }
+
+  if (!store.user) {
+    return (
+      <div className="h-full w-full bg-[#1e1e1e] p-8 flex items-center justify-center">
+        <div className="max-w-md text-center space-y-6 animate-in fade-in zoom-in duration-300">
+          <div className="w-20 h-20 rounded-2xl bg-[#252526] border border-[#3c3c3c] flex items-center justify-center mx-auto shadow-2xl">
+            <Lock className="w-10 h-10 text-[#858585]/30" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-headline font-bold text-[#ffffff]">Authentication Required</h2>
+            <p className="text-sm text-[#858585] leading-relaxed">
+              Please sign in to securely manage your AI provider credentials and project-specific context in the encrypted vault.
+            </p>
+          </div>
+          <Button 
+            onClick={store.login}
+            className="bg-[#ffffff] text-[#000000] hover:bg-[#cccccc] font-bold px-8 py-6 rounded-lg gap-3 shadow-lg"
+          >
+            <Github className="w-5 h-5" />
+            Sign in with GitHub
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full w-full bg-[#1e1e1e] p-8 overflow-y-auto scroll-thin">
       <div className="max-w-4xl mx-auto space-y-8">
@@ -22,7 +61,7 @@ export function VaultView() {
               <span className="text-[10px] font-bold bg-green-500/10 text-green-500 px-2 py-0.5 rounded">ENCRYPTED</span>
             </div>
             <h3 className="font-bold text-[#ffffff]">API Credentials</h3>
-            <p className="text-xs text-[#858585]">Stored in `secrets.json` with OS-level 0600 permissions.</p>
+            <p className="text-xs text-[#858585]">Stored securely and scoped to your user identity.</p>
           </div>
           <div className="bg-[#252526] border border-[#3c3c3c] p-6 rounded-lg space-y-4">
             <div className="flex items-center justify-between">

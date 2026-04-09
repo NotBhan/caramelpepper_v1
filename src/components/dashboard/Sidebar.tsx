@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from "react"
@@ -11,17 +12,22 @@ import {
   Settings, 
   RefreshCw, 
   FolderOpen, 
-  FileQuestion,
-  Clock,
   Fingerprint,
-  Code2
+  User as UserIcon,
+  LogOut,
+  Github
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { FileExplorer } from "./FileExplorer"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { type AppView } from "@/store/use-app-store"
+import { type AppView, useAppStore } from "@/store/use-app-store"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 
 interface ActivityIconProps {
   icon: React.ElementType;
@@ -81,54 +87,104 @@ export function Sidebar({
   activeView,
   setActiveView
 }: SidebarProps) {
+  const store = useAppStore();
+
   return (
-    <div className="h-full flex overflow-hidden">
+    <div className={cn(
+      "h-full flex overflow-hidden fixed inset-y-0 left-0 z-50 transform transition-transform duration-200 ease-in-out md:relative md:translate-x-0 bg-[#252526]",
+      store.isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+    )}>
       {/* Activity Bar */}
       <div className="w-12 bg-[#333333] flex flex-col items-center py-2 shrink-0 border-r border-[#1e1e1e]">
         <ActivityIcon 
           icon={LayoutGrid} 
           label="Dashboard" 
           active={activeView === 'dashboard'} 
-          onClick={() => setActiveView('dashboard')} 
+          onClick={() => { setActiveView('dashboard'); store.closeMobileMenu(); }} 
         />
         <ActivityIcon 
           icon={FileCode} 
           label="Explorer" 
           active={activeView === 'editor'} 
-          onClick={() => setActiveView('editor')} 
+          onClick={() => { setActiveView('editor'); store.closeMobileMenu(); }} 
         />
         <ActivityIcon 
           icon={Search} 
           label="Style Detective" 
           active={activeView === 'style_detective'} 
-          onClick={() => setActiveView('style_detective')} 
+          onClick={() => { setActiveView('style_detective'); store.closeMobileMenu(); }} 
         />
         <ActivityIcon 
           icon={Database} 
           label="Vault" 
           active={activeView === 'vault'} 
-          onClick={() => setActiveView('vault')} 
+          onClick={() => { setActiveView('vault'); store.closeMobileMenu(); }} 
         />
         <ActivityIcon 
           icon={History} 
           label="Refactor History" 
           active={activeView === 'history'} 
-          onClick={() => setActiveView('history')} 
+          onClick={() => { setActiveView('history'); store.closeMobileMenu(); }} 
         />
         
-        <div className="mt-auto w-full">
+        <div className="mt-auto w-full flex flex-col items-center gap-2">
           <ActivityIcon 
             icon={Settings} 
             label="Settings" 
-            onClick={onOpenSettings} 
+            onClick={() => { onOpenSettings(); store.closeMobileMenu(); }} 
           />
+          
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="w-full aspect-square flex items-center justify-center text-[#858585] hover:text-[#cccccc]">
+                {store.user ? (
+                  <Avatar className="w-7 h-7 border border-[#3c3c3c]">
+                    <AvatarImage src={store.user.photoURL || undefined} />
+                    <AvatarFallback className="bg-[#1e1e1e] text-[10px] text-[#ffffff]">
+                      {store.user.displayName?.[0] || store.user.email?.[0] || "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <UserIcon className="w-6 h-6" />
+                )}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent side="right" align="end" className="w-56 bg-[#252526] border-[#3c3c3c] p-2 text-[#cccccc]">
+              {store.user ? (
+                <div className="space-y-2">
+                  <div className="px-2 py-1.5 border-b border-[#3c3c3c]">
+                    <p className="text-xs font-bold text-[#ffffff] truncate">{store.user.displayName || "User"}</p>
+                    <p className="text-[10px] text-[#858585] truncate">{store.user.email}</p>
+                  </div>
+                  <button 
+                    onClick={() => { store.logout(); store.closeMobileMenu(); }}
+                    className="w-full flex items-center gap-2 px-2 py-1.5 text-xs hover:bg-[#3c3c3c] rounded-sm transition-colors text-red-400"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <div className="p-2 space-y-3">
+                  <p className="text-[11px] text-[#858585]">Sign in to isolate your data and sync settings across devices.</p>
+                  <Button 
+                    onClick={() => { store.login(); store.closeMobileMenu(); }}
+                    className="w-full h-8 bg-[#ffffff] text-[#000000] hover:bg-[#cccccc] text-xs font-bold gap-2"
+                  >
+                    <Github className="w-3.5 h-3.5" />
+                    Sign in with GitHub
+                  </Button>
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
       {/* Sidebar Panel */}
       <aside className={cn(
         "flex-1 flex flex-col bg-[#252526] transition-all duration-200 overflow-hidden",
-        activeView === 'dashboard' || activeView === 'vault' || activeView === 'history' ? "w-0 opacity-0" : "w-auto opacity-100"
+        activeView === 'dashboard' || activeView === 'vault' || activeView === 'history' ? "w-0 opacity-0" : "w-[240px] opacity-100"
       )}>
         <div className="p-3 border-b border-[#3c3c3c] flex items-center justify-between">
           <span className="text-[11px] font-bold text-[#858585] uppercase tracking-wider">
@@ -190,6 +246,14 @@ export function Sidebar({
           </div>
         </div>
       </aside>
+
+      {/* Backdrop for mobile */}
+      {store.isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-[-1] md:hidden" 
+          onClick={store.closeMobileMenu}
+        />
+      )}
     </div>
   )
 }

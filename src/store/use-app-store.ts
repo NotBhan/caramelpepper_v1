@@ -4,6 +4,8 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react"
 import { type ComplexityMetrics, calculateComplexity } from "@/lib/complexity"
 import { readDirectoryRecursive } from "@/lib/browser-fs"
+import { auth, githubProvider } from "@/lib/firebase"
+import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut, User } from "firebase/auth"
 
 export type InferenceProvider = 'local' | 'anthropic' | 'openai' | 'gemini' | 'ollama' | 'llamacpp';
 export type AppView = 'dashboard' | 'editor' | 'style_detective' | 'vault' | 'history';
@@ -13,10 +15,12 @@ export type FileItem = {
   path: string;
   is_dir: boolean;
   children?: FileItem[];
-  handle?: any; // FileSystemFileHandle or FileSystemDirectoryHandle
+  handle?: any; 
 };
 
 export interface AppState {
+  user: User | null;
+  loadingAuth: boolean;
   code: string;
   isDiffOpen: boolean;
   proposedCode: string;
@@ -33,31 +37,66 @@ export interface AppState {
   workspaceRoot: string | null;
   isPickerDismissed: boolean;
   activeView: AppView;
+  isMobileMenuOpen: boolean;
 }
 
 const AppContext = createContext<ReturnType<typeof useAppStoreLogic> | null>(null);
 
 function useAppStoreLogic(initialCode: string = "") {
-  const [state, setState] = useState<AppState>(() => {
-    return {
-      code: initialCode,
-      isDiffOpen: false,
-      proposedCode: "",
-      originalMetrics: initialCode ? calculateComplexity(initialCode) : null,
-      proposedMetrics: null,
-      inferenceProvider: 'ollama',
-      keyStatus: {},
-      ollamaConfig: { url: "http://127.0.0.1:11434", model: "qwen2.5-coder", useDefaultUrl: true },
-      llamacppConfig: { url: "http://127.0.0.1:8080" },
-      fileTree: [],
-      activeFilePath: null,
-      isFetchingTree: false,
-      isDirty: false,
-      workspaceRoot: null,
-      isPickerDismissed: false,
-      activeView: 'editor',
-    };
+  const [state, setState] = useState<AppState>({
+    user: null,
+    loadingAuth: true,
+    code: initialCode,
+    isDiffOpen: false,
+    proposedCode: "",
+    originalMetrics: initialCode ? calculateComplexity(initialCode) : null,
+    proposedMetrics: null,
+    inferenceProvider: 'ollama',
+    keyStatus: {},
+    ollamaConfig: { url: "http://127.0.0.1:11434", model: "qwen2.5-coder", useDefaultUrl: true },
+    llamacppConfig: { url: "http://127.0.0.1:8080" },
+    fileTree: [],
+    activeFilePath: null,
+    isFetchingTree: false,
+    isDirty: false,
+    workspaceRoot: null,
+    isPickerDismissed: false,
+    activeView: 'editor',
+    isMobileMenuOpen: false,
   });
+
+  useEffect(() => {
+    if (!auth) {
+      setState(prev => ({ ...prev, loadingAuth: false }));
+      return;
+    }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setState(prev => ({ ...prev, user, loadingAuth: false }));
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const login = useCallback(async () => {
+    if (!auth) {
+      console.error("Firebase Auth not initialized. Check your .env file.");
+      return;
+    }
+    try {
+      await signInWithPopup(auth, githubProvider);
+    } catch (error) {
+      console.error("Login failed", error);
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
+    if (!auth) return;
+    try {
+      await firebaseSignOut(auth);
+      setState(prev => ({ ...prev, user: null }));
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
+  }, []);
 
   const fetchWorkspaceTree = useCallback(async (path?: string) => {
     setState(prev => ({ ...prev, isFetchingTree: true }));
@@ -99,13 +138,10 @@ function useAppStoreLogic(initialCode: string = "") {
 
   const openBrowserWorkspace = useCallback(async () => {
     try {
-      // @ts-ignore
       if (typeof window === 'undefined' || !window.showDirectoryPicker) {
-        console.warn("[WORKSPACE]: Browser File System API not supported in this environment.");
         return false;
       }
-      // @ts-ignore
-      const handle = await window.showDirectoryPicker();
+      const handle = await (window as any).showDirectoryPicker();
       const tree = await readDirectoryRecursive(handle);
       
       setState(prev => ({
@@ -117,8 +153,6 @@ function useAppStoreLogic(initialCode: string = "") {
       }));
       return true;
     } catch (err) {
-      // User cancelling the picker is not an error that should crash the app
-      console.log("[WORKSPACE]: Browser picker interaction finished or cancelled.");
       return false;
     }
   }, []);
@@ -183,44 +217,6 @@ function useAppStoreLogic(initialCode: string = "") {
     }));
   }, []);
 
-  const openLocalFile = useCallback(async () => {
-    try {
-      // @ts-ignore
-      if (typeof window === 'undefined' || !window.showOpenFilePicker) {
-        return false;
-      }
-      // @ts-ignore
-      const [handle] = await window.showOpenFilePicker({
-        types: [
-          {
-            description: 'Code Files',
-            accept: {
-              'text/plain': ['.ts', '.tsx', '.js', '.jsx', '.cpp', '.hpp', '.py', '.rs'],
-            },
-          },
-        ],
-      });
-      
-      const file = await handle.getFile();
-      const content = await file.text();
-      
-      setState(prev => ({
-        ...prev,
-        code: content,
-        activeFilePath: handle.name,
-        originalMetrics: calculateComplexity(content),
-        isDiffOpen: false,
-        proposedCode: "",
-        isDirty: false,
-        activeView: 'editor'
-      }));
-      return true;
-    } catch (err) {
-      console.log("File selection cancelled");
-      return false;
-    }
-  }, []);
-
   const saveActiveFile = useCallback(async () => {
     if (!state.activeFilePath || state.activeFilePath === 'untitled.ts') {
       const newName = prompt("Enter file path to save as:");
@@ -262,49 +258,6 @@ function useAppStoreLogic(initialCode: string = "") {
       console.error("[WORKSPACE]: Save As failed", err);
     }
   }, [state.code, state.workspaceRoot, fetchWorkspaceTree]);
-
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        const [keyRes, configRes] = await Promise.all([
-          fetch('/api/settings/keys/status'),
-          fetch('/api/settings')
-        ]);
-        
-        if (keyRes.ok) {
-          const status = await keyRes.json();
-          setState(prev => ({ ...prev, keyStatus: status }));
-        }
-
-        if (configRes.ok) {
-          const config = await configRes.json();
-          setState(prev => ({
-            ...prev,
-            ollamaConfig: {
-              url: config.ollamaUrl || prev.ollamaConfig.url,
-              model: config.ollamaModel || prev.ollamaConfig.model,
-              useDefaultUrl: config.ollamaUrl ? config.ollamaUrl === "http://127.0.0.1:11434" : prev.ollamaConfig.useDefaultUrl
-            },
-            llamacppConfig: {
-              url: config.llamacppUrl || prev.llamacppConfig.url
-            }
-          }));
-        }
-      } catch (e) {}
-    };
-    fetchInitialData();
-  }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-        e.preventDefault();
-        saveActiveFile();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [saveActiveFile]);
 
   const setInferenceProvider = useCallback((provider: InferenceProvider) => {
     setState(prev => ({ ...prev, inferenceProvider: provider }));
@@ -416,8 +369,18 @@ function useAppStoreLogic(initialCode: string = "") {
     setState(prev => ({ ...prev, activeView: view }));
   }, []);
 
+  const toggleMobileMenu = useCallback(() => {
+    setState(prev => ({ ...prev, isMobileMenuOpen: !prev.isMobileMenuOpen }));
+  }, []);
+
+  const closeMobileMenu = useCallback(() => {
+    setState(prev => ({ ...prev, isMobileMenuOpen: false }));
+  }, []);
+
   return {
     ...state,
+    login,
+    logout,
     setCode,
     openDiff,
     acceptRefactor,
@@ -436,8 +399,9 @@ function useAppStoreLogic(initialCode: string = "") {
     closeActiveFile,
     saveActiveFile,
     saveFileAs,
-    openLocalFile,
     setActiveView,
+    toggleMobileMenu,
+    closeMobileMenu,
   };
 }
 
