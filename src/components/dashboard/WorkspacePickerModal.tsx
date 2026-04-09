@@ -31,6 +31,9 @@ export function WorkspacePickerModal({ isOpen, onSelect, onSkip }: WorkspacePick
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
+  // @ts-ignore
+  const isBrowserApiSupported = typeof window !== 'undefined' && !!window.showDirectoryPicker;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const trimmedPath = path.trim()
@@ -52,6 +55,15 @@ export function WorkspacePickerModal({ isOpen, onSelect, onSkip }: WorkspacePick
   }
 
   const handleBrowserOpen = async () => {
+    if (!isBrowserApiSupported) {
+      toast({
+        title: "Browser API Not Supported",
+        description: "The File System Access API is only available in secure contexts (HTTPS/localhost) and modern Chromium-based browsers (Chrome, Edge).",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsSubmitting(true)
     const success = await store.openBrowserWorkspace()
     if (success) {
@@ -60,11 +72,7 @@ export function WorkspacePickerModal({ isOpen, onSelect, onSkip }: WorkspacePick
         description: "Folder access granted via Browser File System API.",
       })
     } else {
-      toast({
-        title: "Access Denied",
-        description: "Browser picker was cancelled or is not supported.",
-        variant: "destructive"
-      })
+      // openBrowserWorkspace returns false if cancelled, no toast needed for cancellation
     }
     setIsSubmitting(false)
   }
@@ -92,12 +100,20 @@ export function WorkspacePickerModal({ isOpen, onSelect, onSkip }: WorkspacePick
             </Label>
             <Button 
               onClick={handleBrowserOpen}
-              className="w-full h-12 bg-[#333333] hover:bg-[#3c3c3c] border border-[#3c3c3c] text-[#ffffff] font-bold text-sm gap-3 group"
+              variant={isBrowserApiSupported ? "default" : "outline"}
+              className={`w-full h-12 ${isBrowserApiSupported ? 'bg-[#333333] hover:bg-[#3c3c3c]' : 'opacity-50 cursor-not-allowed bg-transparent'} border border-[#3c3c3c] text-[#ffffff] font-bold text-sm gap-3 group`}
             >
-              <FolderOpen className="w-5 h-5 text-[#007acc] group-hover:scale-110 transition-transform" />
-              Open Local Folder (Browser API)
+              <FolderOpen className={`w-5 h-5 ${isBrowserApiSupported ? 'text-[#007acc] group-hover:scale-110' : 'text-[#858585]'} transition-transform`} />
+              {isBrowserApiSupported ? "Open Local Folder (Browser API)" : "Browser API Not Supported"}
             </Button>
-            <p className="text-[10px] text-[#858585] italic">Recommended for privacy-first hosted environments.</p>
+            {!isBrowserApiSupported && (
+              <p className="text-[10px] text-red-400 italic">
+                Requires Chrome/Edge and a secure (HTTPS) connection.
+              </p>
+            )}
+            {isBrowserApiSupported && (
+              <p className="text-[10px] text-[#858585] italic">Recommended for privacy-first hosted environments.</p>
+            )}
           </div>
 
           <div className="relative">

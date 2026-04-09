@@ -98,8 +98,9 @@ function useAppStoreLogic(initialCode: string = "") {
   const openBrowserWorkspace = useCallback(async () => {
     try {
       // @ts-ignore
-      if (!window.showDirectoryPicker) {
-        throw new Error("Browser File System API not supported in this browser.");
+      if (typeof window === 'undefined' || !window.showDirectoryPicker) {
+        console.warn("[WORKSPACE]: Browser File System API not supported in this environment.");
+        return false;
       }
       // @ts-ignore
       const handle = await window.showDirectoryPicker();
@@ -114,7 +115,8 @@ function useAppStoreLogic(initialCode: string = "") {
       }));
       return true;
     } catch (err) {
-      console.error("[WORKSPACE]: Browser picker error", err);
+      // User cancelling the picker is not an error that should crash the app
+      console.log("[WORKSPACE]: Browser picker interaction finished or cancelled.");
       return false;
     }
   }, []);
@@ -182,6 +184,10 @@ function useAppStoreLogic(initialCode: string = "") {
   const openLocalFile = useCallback(async () => {
     try {
       // @ts-ignore
+      if (typeof window === 'undefined' || !window.showOpenFilePicker) {
+        return false;
+      }
+      // @ts-ignore
       const [handle] = await window.showOpenFilePicker({
         types: [
           {
@@ -206,8 +212,10 @@ function useAppStoreLogic(initialCode: string = "") {
         isDirty: false,
         activeView: 'editor'
       }));
+      return true;
     } catch (err) {
       console.log("File selection cancelled");
+      return false;
     }
   }, []);
 
