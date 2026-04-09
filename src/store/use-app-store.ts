@@ -1,7 +1,9 @@
+
 "use client"
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react"
 import { type ComplexityMetrics, calculateComplexity } from "@/lib/complexity"
+import { readDirectoryRecursive } from "@/lib/browser-fs"
 
 export type InferenceProvider = 'local' | 'anthropic' | 'openai' | 'gemini' | 'ollama';
 export type AppView = 'dashboard' | 'editor' | 'style_detective' | 'vault' | 'history';
@@ -11,7 +13,7 @@ export type FileItem = {
   path: string;
   is_dir: boolean;
   children?: FileItem[];
-  handle?: FileSystemFileHandle | FileSystemDirectoryHandle;
+  handle?: any; // FileSystemFileHandle or FileSystemDirectoryHandle
 };
 
 export interface AppState {
@@ -93,6 +95,30 @@ function useAppStoreLogic(initialCode: string = "") {
     }
   }, [fetchWorkspaceTree]);
 
+  const openBrowserWorkspace = useCallback(async () => {
+    try {
+      // @ts-ignore
+      if (!window.showDirectoryPicker) {
+        throw new Error("Browser File System API not supported in this browser.");
+      }
+      // @ts-ignore
+      const handle = await window.showDirectoryPicker();
+      const tree = await readDirectoryRecursive(handle);
+      
+      setState(prev => ({
+        ...prev,
+        fileTree: tree,
+        workspaceRoot: `browser://${handle.name}`,
+        isPickerDismissed: true,
+        activeView: 'editor'
+      }));
+      return true;
+    } catch (err) {
+      console.error("[WORKSPACE]: Browser picker error", err);
+      return false;
+    }
+  }, []);
+
   const resetWorkspaceRoot = useCallback(() => {
     setState(prev => ({ ...prev, workspaceRoot: null, fileTree: [], isPickerDismissed: false, activeView: 'editor' }));
   }, []);
@@ -101,10 +127,10 @@ function useAppStoreLogic(initialCode: string = "") {
     setState(prev => ({ ...prev, isPickerDismissed: true }));
   }, []);
 
-  const openFile = useCallback(async (path: string, handle?: FileSystemFileHandle) => {
+  const openFile = useCallback(async (path: string, handle?: any) => {
     try {
       let content = "";
-      if (handle) {
+      if (handle && handle.getFile) {
         const file = await handle.getFile();
         content = await file.text();
       } else {
@@ -367,6 +393,7 @@ function useAppStoreLogic(initialCode: string = "") {
     saveOllamaConfig,
     fetchWorkspaceTree,
     setWorkspaceRoot,
+    openBrowserWorkspace,
     resetWorkspaceRoot,
     dismissPicker,
     openFile,

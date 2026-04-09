@@ -1,7 +1,8 @@
+
 "use client"
 
 import React from "react"
-import { FolderOpen, MapPin, AlertCircle, Loader2, FileX } from "lucide-react"
+import { FolderOpen, MapPin, AlertCircle, Loader2, FileX, Laptop } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -14,6 +15,8 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useAppStore } from "@/store/use-app-store"
+import { useToast } from "@/hooks/use-toast"
 
 interface WorkspacePickerModalProps {
   isOpen: boolean;
@@ -22,6 +25,8 @@ interface WorkspacePickerModalProps {
 }
 
 export function WorkspacePickerModal({ isOpen, onSelect, onSkip }: WorkspacePickerModalProps) {
+  const store = useAppStore()
+  const { toast } = useToast()
   const [path, setPath] = React.useState("")
   const [isSubmitting, setIsSubmitting] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
@@ -46,6 +51,24 @@ export function WorkspacePickerModal({ isOpen, onSelect, onSkip }: WorkspacePick
     }
   }
 
+  const handleBrowserOpen = async () => {
+    setIsSubmitting(true)
+    const success = await store.openBrowserWorkspace()
+    if (success) {
+      toast({
+        title: "Workspace Loaded",
+        description: "Folder access granted via Browser File System API.",
+      })
+    } else {
+      toast({
+        title: "Access Denied",
+        description: "Browser picker was cancelled or is not supported.",
+        variant: "destructive"
+      })
+    }
+    setIsSubmitting(false)
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onSkip(); }}>
       <DialogContent className="sm:max-w-[560px] bg-[#252526] border-[#3c3c3c] text-[#cccccc] p-0 overflow-hidden shadow-2xl">
@@ -56,13 +79,37 @@ export function WorkspacePickerModal({ isOpen, onSelect, onSkip }: WorkspacePick
               <DialogTitle className="font-headline text-xl text-[#ffffff]">Select Workspace</DialogTitle>
             </div>
             <DialogDescription className="text-[#858585] text-xs leading-relaxed">
-              Browser-based file pickers are restricted in this environment. Please provide the absolute path to your project directory.
+              CaramelPepper supports two modes: Local Path (for backend access) or Browser API (for client-side local folder access).
             </DialogDescription>
           </DialogHeader>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="px-6 py-4 space-y-4">
+        <div className="px-6 py-4 space-y-6">
+          <div className="space-y-3">
+            <Label className="text-[10px] font-bold uppercase tracking-widest text-[#858585] flex items-center gap-2">
+              <Laptop className="w-3.5 h-3.5" />
+              Direct Client Access
+            </Label>
+            <Button 
+              onClick={handleBrowserOpen}
+              className="w-full h-12 bg-[#333333] hover:bg-[#3c3c3c] border border-[#3c3c3c] text-[#ffffff] font-bold text-sm gap-3 group"
+            >
+              <FolderOpen className="w-5 h-5 text-[#007acc] group-hover:scale-110 transition-transform" />
+              Open Local Folder (Browser API)
+            </Button>
+            <p className="text-[10px] text-[#858585] italic">Recommended for privacy-first hosted environments.</p>
+          </div>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-[#3c3c3c]" />
+            </div>
+            <div className="relative flex justify-center text-[10px] uppercase">
+              <span className="bg-[#252526] px-2 text-[#858585] font-bold">OR PROVIDE PATH</span>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-3">
               <Label htmlFor="path" className="text-[10px] font-bold uppercase tracking-widest text-[#858585] flex items-center gap-2">
                 <MapPin className="w-3.5 h-3.5" />
@@ -77,10 +124,9 @@ export function WorkspacePickerModal({ isOpen, onSelect, onSkip }: WorkspacePick
                   if (error) setError(null);
                 }}
                 className="bg-[#1e1e1e] border-[#3c3c3c] focus:ring-[#007acc] h-10 text-[#ffffff] font-mono text-sm"
-                autoFocus
               />
               <p className="text-[11px] text-[#858585]">
-                Example for Firebase Studio: <code className="bg-[#1e1e1e] px-1.5 py-0.5 rounded text-[#cccccc] border border-[#3c3c3c]">/home/user/project</code>
+                Only works if the CaramelPepper backend is running on your machine.
               </p>
             </div>
 
@@ -92,36 +138,30 @@ export function WorkspacePickerModal({ isOpen, onSelect, onSkip }: WorkspacePick
                 </AlertDescription>
               </Alert>
             )}
-          </div>
 
-          <DialogFooter className="bg-[#1e1e1e] px-6 py-4 flex items-center justify-between border-t border-[#3c3c3c] gap-4">
-            <Button 
-              type="button"
-              variant="ghost"
-              onClick={onSkip}
-              className="text-[#858585] hover:text-[#ffffff] hover:bg-[#2a2d2e] text-xs h-9 px-3 group"
-            >
-              <FileX className="w-4 h-4 mr-2 group-hover:text-amber-500 transition-colors" />
-              Skip Workspace (Single File Mode)
-            </Button>
-            <div className="flex items-center gap-2">
+            <div className="flex justify-end gap-2">
               <Button 
                 type="submit" 
                 disabled={!path.trim() || isSubmitting}
                 className="bg-[#007acc] hover:bg-[#0062a3] text-[#ffffff] font-bold h-9 px-6 min-w-[140px]"
               >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Initializing...
-                  </>
-                ) : (
-                  "Load Workspace"
-                )}
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Load Backend Path"}
               </Button>
             </div>
-          </DialogFooter>
-        </form>
+          </form>
+        </div>
+
+        <DialogFooter className="bg-[#1e1e1e] px-6 py-4 flex items-center justify-between border-t border-[#3c3c3c] gap-4">
+          <Button 
+            type="button"
+            variant="ghost"
+            onClick={onSkip}
+            className="text-[#858585] hover:text-[#ffffff] hover:bg-[#2a2d2e] text-xs h-9 px-3 group"
+          >
+            <FileX className="w-4 h-4 mr-2 group-hover:text-amber-500 transition-colors" />
+            Skip (Single File Mode)
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
