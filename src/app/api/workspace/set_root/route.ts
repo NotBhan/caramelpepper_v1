@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Validates that a path exists and is a directory.
  */

@@ -8,8 +8,6 @@ import { RefactorPanel } from "@/components/dashboard/RefactorPanel"
 import { DiffViewer } from "@/components/dashboard/DiffViewer"
 import { WorkspaceLayout } from "@/components/dashboard/WorkspaceLayout"
 import { useAppStore } from "@/store/use-app-store"
-import { analyzeCodeStyle } from "@/ai/flows/code-style-alignment"
-import { localCodeRefactoring } from "@/ai/flows/local-code-refactoring"
 import { Toaster } from "@/components/ui/toaster"
 import { useToast } from "@/hooks/use-toast"
 import { SettingsModal } from "@/components/dashboard/SettingsModal"
@@ -45,35 +43,37 @@ export default function Dashboard() {
     setIsBusy(true)
     setRefactorOutput(null)
     try {
-      const style = await analyzeCodeStyle({ code: store.code })
-      setStyleReport(style)
-
-      let refactorResult;
-
-      if (store.inferenceProvider === 'ollama') {
-        const response = await fetch('/api/ai/refactor', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            code: store.code,
-            language: 'typescript',
-            provider: 'ollama'
-          })
-        });
-
-        if (!response.ok) {
-          const errData = await response.json();
-          throw new Error(errData.error || 'Ollama refactor failed');
-        }
-
-        refactorResult = await response.json();
-      } else {
-        refactorResult = await localCodeRefactoring({ 
-          code: store.code, 
-          language: 'typescript' 
-        });
+      // 1. Backend isolated Style Analysis
+      const styleResponse = await fetch('/api/ai/analyze-style', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: store.code })
+      });
+      
+      if (!styleResponse.ok) {
+        throw new Error('Style analysis engine failure');
       }
       
+      const styleData = await styleResponse.json();
+      setStyleReport(styleData);
+
+      // 2. Backend isolated Refactoring
+      const refactorResponse = await fetch('/api/ai/refactor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: store.code,
+          language: 'typescript',
+          provider: store.inferenceProvider
+        })
+      });
+
+      if (!refactorResponse.ok) {
+        const errData = await refactorResponse.json();
+        throw new Error(errData.error || 'AI Refactoring failed');
+      }
+
+      const refactorResult = await refactorResponse.json();
       setRefactorOutput(refactorResult);
 
       if (refactorResult.refactoredCode) {

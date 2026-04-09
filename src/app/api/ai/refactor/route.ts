@@ -1,7 +1,9 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import { localCodeRefactoring } from '@/ai/flows/local-code-refactoring';
+
+export const dynamic = 'force-dynamic';
 
 const VAULT_PATH = path.join(process.cwd(), 'secrets.json');
 const CONFIG_PATH = path.join(process.cwd(), 'config.json');
@@ -9,6 +11,7 @@ const CONFIG_PATH = path.join(process.cwd(), 'config.json');
 /**
  * AI Refactoring Router.
  * Handles switching between cloud Genkit providers and local Ollama inference.
+ * Marked as force-dynamic to prevent build-time execution.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -18,13 +21,13 @@ export async function POST(req: NextRequest) {
       return handleOllamaRefactor(code, language);
     }
 
-    // [FUTURE]: Proxy to Genkit flows for other providers if pivoting fully to API routes.
-    // For now, we return an error if calling from here for non-ollama as they use server actions.
-    return NextResponse.json({ error: 'Provider not supported via API route yet.' }, { status: 400 });
+    // Default to Genkit cloud providers (Gemini, etc.)
+    const result = await localCodeRefactoring({ code, language });
+    return NextResponse.json(result);
 
   } catch (err: any) {
     console.error("[AI API ERROR]:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: err.message || 'AI processing failed' }, { status: 500 });
   }
 }
 

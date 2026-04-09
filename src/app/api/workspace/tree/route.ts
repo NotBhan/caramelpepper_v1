@@ -3,6 +3,8 @@ import fs from 'fs/promises';
 import path from 'path';
 import { normalizeAbsolutePath } from '@/lib/path-utils';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Recursively builds a nested directory tree.
  * Filters out heavy directories and normalizes paths for cross-platform UI consistency.

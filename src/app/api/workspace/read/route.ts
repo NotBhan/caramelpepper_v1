@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import { normalizeAbsolutePath } from '@/lib/path-utils';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * Reads the content of a file from the filesystem.
  * Handles decoding for paths with special characters like brackets or spaces.
