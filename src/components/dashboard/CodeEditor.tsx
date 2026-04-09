@@ -2,7 +2,7 @@
 
 import React from "react"
 import Editor from "@monaco-editor/react"
-import { Copy, Trash2, FileJson, Layers, X, Code2, Terminal } from "lucide-react"
+import { Copy, Trash2, FileJson, Layers, X, Code2, Terminal, FolderOpen, FilePlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { getLanguageFromPath } from "@/lib/language-mapper"
@@ -16,6 +16,8 @@ interface CodeEditorProps {
   isReadOnly?: boolean;
   onClose?: () => void;
   activeFilePath: string | null;
+  onOpenWorkspace?: () => void;
+  onNewFile?: () => void;
 }
 
 export function CodeEditor({ 
@@ -26,7 +28,9 @@ export function CodeEditor({
   title,
   isReadOnly = false,
   onClose,
-  activeFilePath
+  activeFilePath,
+  onOpenWorkspace,
+  onNewFile
 }: CodeEditorProps) {
   const lineCount = value.split('\n').length;
   const editorRef = React.useRef<any>(null);
@@ -57,13 +61,28 @@ export function CodeEditor({
         </div>
         <h2 className="text-xl font-headline font-bold text-[#ffffff] mb-2">Workbench Empty</h2>
         <p className="text-sm text-[#858585] max-w-sm leading-relaxed mb-8">
-          Select a file from the explorer sidebar or open a single file via the Menu Bar to begin refactoring.
+          Open a local repository or start with a single file to begin your AI-powered refactoring journey.
         </p>
-        <div className="flex flex-col items-center gap-2">
-          <div className="flex items-center gap-2 text-[10px] text-[#858585] font-mono uppercase tracking-widest bg-[#252526] px-3 py-1.5 rounded border border-[#3c3c3c]">
-            <Terminal className="w-3 h-3" />
-            <span>Ready for Input</span>
-          </div>
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <Button 
+            onClick={onOpenWorkspace}
+            variant="outline"
+            className="h-10 px-6 border-[#3c3c3c] bg-[#252526] hover:bg-[#333333] text-[#ffffff] font-bold text-xs gap-2"
+          >
+            <FolderOpen className="w-4 h-4 text-[#007acc]" />
+            Open Workspace
+          </Button>
+          <Button 
+            onClick={onNewFile}
+            className="h-10 px-6 bg-[#007acc] hover:bg-[#0062a3] text-[#ffffff] font-bold text-xs gap-2"
+          >
+            <FilePlus className="w-4 h-4" />
+            New Scratchpad
+          </Button>
+        </div>
+        <div className="mt-8 flex items-center gap-2 text-[10px] text-[#858585] font-mono uppercase tracking-widest bg-[#252526] px-3 py-1.5 rounded border border-[#3c3c3c]">
+          <Terminal className="w-3 h-3" />
+          <span>pepper-shell ready</span>
         </div>
       </div>
     );

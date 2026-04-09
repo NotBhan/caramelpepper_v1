@@ -109,6 +109,8 @@ export default function Dashboard() {
               isAnalyzing={isBusy}
               onClose={store.closeActiveFile}
               activeFilePath={store.activeFilePath}
+              onOpenWorkspace={store.resetWorkspaceRoot}
+              onNewFile={store.newFile}
             />
           }
           refactor={
