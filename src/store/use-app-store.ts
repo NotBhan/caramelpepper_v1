@@ -32,13 +32,13 @@ export interface AppState {
   activeView: AppView;
 }
 
-export function useAppStore(initialCode: string) {
+export function useAppStore(initialCode: string = "") {
   const [state, setState] = useState<AppState>(() => {
     return {
       code: initialCode,
       isDiffOpen: false,
       proposedCode: "",
-      originalMetrics: calculateComplexity(initialCode),
+      originalMetrics: initialCode ? calculateComplexity(initialCode) : null,
       proposedMetrics: null,
       inferenceProvider: 'local',
       keyStatus: {},

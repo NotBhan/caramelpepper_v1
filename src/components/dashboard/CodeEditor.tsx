@@ -5,6 +5,7 @@ import Editor from "@monaco-editor/react"
 import { Copy, Trash2, FileJson, Layers, X, Code2, Terminal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { getLanguageFromPath } from "@/lib/language-mapper"
 
 interface CodeEditorProps {
   value: string;
@@ -69,6 +70,7 @@ export function CodeEditor({
   }
 
   const displayTitle = title || activeFilePath?.split(/[/\\]/).pop() || "scratchpad.ts";
+  const language = getLanguageFromPath(activeFilePath);
 
   return (
     <div className="flex flex-col h-full bg-[#1e1e1e] border-r border-[#3c3c3c]">
@@ -110,7 +112,7 @@ export function CodeEditor({
       <div className="flex-1 min-h-0">
         <Editor
           height="100%"
-          defaultLanguage="typescript"
+          language={language}
           theme="vs-dark"
           value={value}
           onChange={(val) => onChange(val || "")}
@@ -134,7 +136,7 @@ export function CodeEditor({
         <div className="flex gap-4">
           <span>Lines: {lineCount}</span>
           <span>UTF-8</span>
-          <span>TypeScript</span>
+          <span className="capitalize">{language}</span>
         </div>
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 rounded-full bg-[#007acc]" />

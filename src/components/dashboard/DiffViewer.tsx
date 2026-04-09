@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { type ComplexityMetrics } from "@/lib/complexity"
 import { cn } from "@/lib/utils"
+import { getLanguageFromPath } from "@/lib/language-mapper"
 
 interface DiffViewerProps {
   original: string;
@@ -15,6 +16,7 @@ interface DiffViewerProps {
   proposedMetrics: ComplexityMetrics | null;
   onAccept: () => void;
   onReject: () => void;
+  activeFilePath: string | null;
 }
 
 export function DiffViewer({
@@ -23,7 +25,8 @@ export function DiffViewer({
   originalMetrics,
   proposedMetrics,
   onAccept,
-  onReject
+  onReject,
+  activeFilePath
 }: DiffViewerProps) {
   const editorRef = React.useRef<any>(null);
   const monacoRef = React.useRef<any>(null);
@@ -70,6 +73,7 @@ export function DiffViewer({
   };
 
   const cyc = getImprovement('cyclomatic');
+  const language = getLanguageFromPath(activeFilePath);
 
   const editorOptions = React.useMemo(() => ({
     renderSideBySide: true,
@@ -93,7 +97,7 @@ export function DiffViewer({
       <div className="flex items-center justify-between px-4 py-2 border-b border-[#3c3c3c] bg-[#252526]">
         <div className="flex items-center gap-3">
           <Badge variant="outline" className="border-[#007acc]/30 text-[#007acc] bg-[#007acc]/5 font-mono text-[10px]">
-            PROPOSED_REFACTOR.TS
+            {activeFilePath?.split(/[/\\]/).pop()?.toUpperCase() || "PROPOSED_REFACTOR.TS"}
           </Badge>
           
           {cyc && (
@@ -133,7 +137,7 @@ export function DiffViewer({
           height="100%"
           original={original}
           modified={modified}
-          language="typescript"
+          language={language}
           theme="vs-dark"
           options={editorOptions}
           onMount={handleEditorDidMount}

@@ -14,25 +14,8 @@ import { SettingsModal } from "@/components/dashboard/SettingsModal"
 import { MenuBar } from "@/components/dashboard/MenuBar"
 import { WorkspacePickerModal } from "@/components/dashboard/WorkspacePickerModal"
 
-const DEFAULT_CODE = `function processData(data: any[]) {
-  let results = [];
-  for (let i = 0; i < data.length; i++) {
-    if (data[i].status === 'active') {
-      if (data[i].value > 100) {
-        let transformed = data[i].value * 1.5;
-        results.push({...data[i], transformed});
-      } else if (data[i].value < 0) {
-        // Skip negative
-      } else {
-        results.push(data[i]);
-      }
-    }
-  }
-  return results;
-}`;
-
 export default function Dashboard() {
-  const store = useAppStore(DEFAULT_CODE)
+  const store = useAppStore("")
   const [styleReport, setStyleReport] = React.useState<any>(null)
   const [refactorOutput, setRefactorOutput] = React.useState<any>(null)
   const [isBusy, setIsBusy] = React.useState(false)
@@ -135,6 +118,7 @@ export default function Dashboard() {
               proposedMetrics={store.proposedMetrics}
               onAccept={store.acceptRefactor}
               onReject={store.rejectRefactor}
+              activeFilePath={store.activeFilePath}
             />
           }
           analysis={
