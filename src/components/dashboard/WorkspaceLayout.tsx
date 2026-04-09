@@ -3,6 +3,11 @@
 import React from "react"
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels"
 import { cn } from "@/lib/utils"
+import { type AppView } from "@/store/use-app-store"
+import { DashboardView } from "./DashboardView"
+import { StyleDetectiveView } from "./StyleDetectiveView"
+import { VaultView } from "./VaultView"
+import { HistoryView } from "./HistoryView"
 
 interface WorkspaceLayoutProps {
   sidebar: React.ReactNode;
@@ -11,6 +16,7 @@ interface WorkspaceLayoutProps {
   analysis: React.ReactNode;
   bottom: React.ReactNode;
   isDiffOpen?: boolean;
+  activeView: AppView;
 }
 
 export function WorkspaceLayout({
@@ -19,7 +25,8 @@ export function WorkspaceLayout({
   refactor,
   analysis,
   bottom,
-  isDiffOpen = false
+  isDiffOpen = false,
+  activeView
 }: WorkspaceLayoutProps) {
   const LAYOUT_KEY = "caramel-pepper-layout"
   const [isMounted, setIsMounted] = React.useState(false)
@@ -36,6 +43,23 @@ export function WorkspaceLayout({
 
   if (!isMounted) {
     return <div className="h-full w-full bg-[#1e1e1e]" />
+  }
+
+  // If not in editor view, show a simpler full-screen panel layout for other views
+  if (activeView !== 'editor') {
+    return (
+      <div className="h-full w-full flex bg-[#1e1e1e]">
+        <div className="w-auto h-full shrink-0">
+          {sidebar}
+        </div>
+        <div className="flex-1 min-w-0">
+          {activeView === 'dashboard' && <DashboardView />}
+          {activeView === 'style_detective' && <StyleDetectiveView />}
+          {activeView === 'vault' && <VaultView />}
+          {activeView === 'history' && <HistoryView />}
+        </div>
+      </div>
+    );
   }
 
   return (

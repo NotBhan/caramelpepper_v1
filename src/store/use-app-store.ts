@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react"
 import { type ComplexityMetrics, calculateComplexity } from "@/lib/complexity"
 
 export type InferenceProvider = 'local' | 'anthropic' | 'openai' | 'gemini' | 'ollama';
+export type AppView = 'dashboard' | 'editor' | 'style_detective' | 'vault' | 'history';
 
 export type FileItem = {
   name: string;
@@ -21,13 +22,14 @@ export interface AppState {
   proposedMetrics: ComplexityMetrics | null;
   inferenceProvider: InferenceProvider;
   keyStatus: Record<string, boolean>;
-  ollamaConfig: { url: string; model: string };
+  ollamaConfig: { url: string; model: string; useDefaultUrl: boolean };
   fileTree: FileItem[];
   activeFilePath: string | null;
   isFetchingTree: boolean;
   isDirty: boolean;
   workspaceRoot: string | null;
   isPickerDismissed: boolean;
+  activeView: AppView;
 }
 
 export function useAppStore(initialCode: string) {
@@ -40,13 +42,14 @@ export function useAppStore(initialCode: string) {
       proposedMetrics: null,
       inferenceProvider: 'local',
       keyStatus: {},
-      ollamaConfig: { url: "http://127.0.0.1:11434", model: "qwen2.5-coder" },
+      ollamaConfig: { url: "http://127.0.0.1:11434", model: "qwen2.5-coder", useDefaultUrl: true },
       fileTree: [],
       activeFilePath: null,
       isFetchingTree: false,
       isDirty: false,
       workspaceRoot: null,
       isPickerDismissed: false,
+      activeView: 'editor',
     };
   });
 
@@ -218,15 +221,14 @@ export function useAppStore(initialCode: string) {
 
         if (configRes.ok) {
           const config = await configRes.json();
-          if (config.ollamaUrl || config.ollamaModel) {
-            setState(prev => ({
-              ...prev,
-              ollamaConfig: {
-                url: config.ollamaUrl || prev.ollamaConfig.url,
-                model: config.ollamaModel || prev.ollamaConfig.model
-              }
-            }));
-          }
+          setState(prev => ({
+            ...prev,
+            ollamaConfig: {
+              url: config.ollamaUrl || prev.ollamaConfig.url,
+              model: config.ollamaModel || prev.ollamaConfig.model,
+              useDefaultUrl: config.ollamaUrl ? config.ollamaUrl === "http://127.0.0.1:11434" : prev.ollamaConfig.useDefaultUrl
+            }
+          }));
         }
       } catch (e) {}
     };
@@ -280,7 +282,7 @@ export function useAppStore(initialCode: string) {
       if (response.ok) {
         setState(prev => ({
           ...prev,
-          ollamaConfig: { url, model }
+          ollamaConfig: { ...prev.ollamaConfig, url, model }
         }));
         return true;
       }
@@ -329,6 +331,10 @@ export function useAppStore(initialCode: string) {
     }));
   }, []);
 
+  const setActiveView = useCallback((view: AppView) => {
+    setState(prev => ({ ...prev, activeView: view }));
+  }, []);
+
   return {
     ...state,
     setCode,
@@ -347,5 +353,6 @@ export function useAppStore(initialCode: string) {
     saveActiveFile,
     saveFileAs,
     openLocalFile,
+    setActiveView,
   };
 }

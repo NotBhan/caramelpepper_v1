@@ -1,8 +1,7 @@
-
 "use client"
 
 import React from "react"
-import { Settings, Cpu, Cloud, ShieldCheck, Key, CheckCircle2, Globe, Server } from "lucide-react"
+import { Settings, Cpu, ShieldCheck, Key, Globe, Server } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -20,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
 import { type InferenceProvider } from "@/store/use-app-store"
 import { useToast } from "@/hooks/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -31,7 +31,7 @@ interface SettingsModalProps {
   onProviderChange: (p: InferenceProvider) => void;
   keyStatus: Record<string, boolean>;
   onSaveKey: (provider: string, key: string) => Promise<boolean>;
-  ollamaConfig?: { url: string; model: string };
+  ollamaConfig?: { url: string; model: string; useDefaultUrl: boolean };
   onSaveOllama?: (url: string, model: string) => Promise<boolean>;
 }
 
@@ -46,11 +46,14 @@ export function SettingsModal({
   onSaveOllama
 }: SettingsModalProps) {
   const [tempKey, setTempKey] = React.useState("")
-  const [tempOllamaUrl, setTempOllamaUrl] = React.useState(ollamaConfig?.url || "")
-  const [tempOllamaModel, setTempOllamaModel] = React.useState(ollamaConfig?.model || "")
+  const [useDefaultOllama, setUseDefaultOllama] = React.useState(ollamaConfig?.useDefaultUrl ?? true)
+  const [tempOllamaUrl, setTempOllamaUrl] = React.useState(ollamaConfig?.url || "http://127.0.0.1:11434")
+  const [tempOllamaModel, setTempOllamaModel] = React.useState(ollamaConfig?.model || "qwen2.5-coder")
   const [isSaving, setIsSaving] = React.useState(false)
   const [isTesting, setIsTesting] = React.useState(false)
   const { toast } = useToast()
+
+  const activeUrl = useDefaultOllama ? "http://127.0.0.1:11434" : tempOllamaUrl
 
   const handleSaveKey = async () => {
     if (!tempKey) return
@@ -67,9 +70,9 @@ export function SettingsModal({
   }
 
   const handleSaveOllama = async () => {
-    if (!tempOllamaUrl || !tempOllamaModel || !onSaveOllama) return
+    if (!activeUrl || !tempOllamaModel || !onSaveOllama) return
     setIsSaving(true)
-    const success = await onSaveOllama(tempOllamaUrl, tempOllamaModel)
+    const success = await onSaveOllama(activeUrl, tempOllamaModel)
     if (success) {
       toast({
         title: "Ollama Config Saved",
@@ -82,7 +85,7 @@ export function SettingsModal({
   const testOllama = async () => {
     setIsTesting(true)
     try {
-      const response = await fetch(`${tempOllamaUrl}/api/tags`, { method: 'GET' })
+      const response = await fetch(`${activeUrl}/api/tags`, { method: 'GET' })
       if (response.ok) {
         toast({
           title: "Connection Success",
@@ -176,18 +179,29 @@ export function SettingsModal({
 
             <TabsContent value="ollama" className="space-y-4 pt-4">
               <div className="space-y-3">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
-                    <Globe className="w-3 h-3" />
-                    Ollama Base URL
-                  </Label>
-                  <Input
-                    placeholder="http://127.0.0.1:11434"
-                    value={tempOllamaUrl}
-                    onChange={(e) => setTempOllamaUrl(e.target.value)}
-                    className="bg-slate-950 border-slate-800 h-9"
-                  />
+                <div className="flex items-center justify-between p-3 bg-slate-950 border border-slate-800 rounded">
+                  <div className="space-y-0.5">
+                    <Label className="text-[11px] font-bold text-slate-100 uppercase">Use Default URL</Label>
+                    <p className="text-[10px] text-slate-500">http://127.0.0.1:11434</p>
+                  </div>
+                  <Switch checked={useDefaultOllama} onCheckedChange={setUseDefaultOllama} />
                 </div>
+
+                {!useDefaultOllama && (
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                      <Globe className="w-3 h-3" />
+                      Custom Ollama Base URL
+                    </Label>
+                    <Input
+                      placeholder="http://127.0.0.1:11434"
+                      value={tempOllamaUrl}
+                      onChange={(e) => setTempOllamaUrl(e.target.value)}
+                      className="bg-slate-950 border-slate-800 h-9"
+                    />
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
                     <Server className="w-3 h-3" />
@@ -204,14 +218,14 @@ export function SettingsModal({
                   <Button 
                     variant="outline"
                     onClick={testOllama}
-                    disabled={isTesting || !tempOllamaUrl}
+                    disabled={isTesting || (!useDefaultOllama && !tempOllamaUrl)}
                     className="flex-1 border-slate-800 text-xs h-8"
                   >
                     {isTesting ? "Pinging..." : "Test Connection"}
                   </Button>
                   <Button 
                     onClick={handleSaveOllama}
-                    disabled={isSaving || !tempOllamaUrl || !tempOllamaModel}
+                    disabled={isSaving || (!useDefaultOllama && !tempOllamaUrl) || !tempOllamaModel}
                     className="flex-1 bg-[#007acc] hover:bg-[#0062a3] text-[#ffffff] font-bold text-xs h-8"
                   >
                     Update Config

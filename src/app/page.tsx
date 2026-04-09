@@ -100,6 +100,7 @@ export default function Dashboard() {
       <MenuBar />
       <div className="flex-1">
         <WorkspaceLayout
+          activeView={store.activeView}
           isDiffOpen={store.isDiffOpen}
           sidebar={
             <Sidebar 
@@ -112,6 +113,8 @@ export default function Dashboard() {
               onOpenFile={store.openFile}
               workspaceRoot={store.workspaceRoot}
               onOpenWorkspace={() => store.resetWorkspaceRoot()}
+              activeView={store.activeView}
+              setActiveView={store.setActiveView}
             />
           }
           editor={
