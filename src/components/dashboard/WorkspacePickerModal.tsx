@@ -47,7 +47,7 @@ export function WorkspacePickerModal({ isOpen, onSelect, onSkip }: WorkspacePick
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={() => {}}>
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onSkip(); }}>
       <DialogContent className="sm:max-w-[560px] bg-[#252526] border-[#3c3c3c] text-[#cccccc] p-0 overflow-hidden shadow-2xl">
         <div className="p-6 pb-0">
           <DialogHeader>
