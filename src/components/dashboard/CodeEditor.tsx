@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from "react"
@@ -67,17 +68,17 @@ export function CodeEditor({
           <Button 
             onClick={onOpenWorkspace}
             variant="outline"
-            className="h-10 px-6 border-[#3c3c3c] bg-[#252526] hover:bg-[#333333] text-[#ffffff] font-bold text-xs gap-2"
+            className="h-10 px-6 border-[#3c3c3c] bg-[#252526] hover:bg-[#333333] text-[#ffffff] font-bold text-xs gap-2 flex items-center justify-center max-w-full"
           >
-            <FolderOpen className="w-4 h-4 text-[#007acc]" />
-            Open Workspace
+            <FolderOpen className="w-4 h-4 text-[#007acc] shrink-0" />
+            <span className="truncate">Open Workspace</span>
           </Button>
           <Button 
             onClick={onNewFile}
-            className="h-10 px-6 bg-[#007acc] hover:bg-[#0062a3] text-[#ffffff] font-bold text-xs gap-2"
+            className="h-10 px-6 bg-[#007acc] hover:bg-[#0062a3] text-[#ffffff] font-bold text-xs gap-2 flex items-center justify-center max-w-full"
           >
-            <FilePlus className="w-4 h-4" />
-            New Scratchpad
+            <FilePlus className="w-4 h-4 shrink-0" />
+            <span className="truncate">New Scratchpad</span>
           </Button>
         </div>
         <div className="mt-8 flex items-center gap-2 text-[10px] text-[#858585] font-mono uppercase tracking-widest bg-[#252526] px-3 py-1.5 rounded border border-[#3c3c3c]">

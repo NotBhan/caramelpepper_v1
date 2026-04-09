@@ -218,10 +218,10 @@ export function Sidebar({
                     variant="outline" 
                     size="sm" 
                     onClick={onOpenWorkspace}
-                    className="h-7 text-[10px] border-[#3c3c3c] text-[#cccccc] hover:bg-[#2a2d2e] w-full"
+                    className="h-7 text-[10px] border-[#3c3c3c] text-[#cccccc] hover:bg-[#2a2d2e] w-full flex items-center justify-center gap-2 px-1 overflow-hidden"
                   >
-                    <FolderOpen className="w-3 h-3 mr-2" />
-                    Open Workspace
+                    <FolderOpen className="w-3 h-3 shrink-0" />
+                    <span className="truncate">Open Workspace</span>
                   </Button>
                 </div>
               )}
