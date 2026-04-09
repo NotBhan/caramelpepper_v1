@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { type ComplexityMetrics, calculateComplexity } from "@/lib/complexity"
 import { readDirectoryRecursive } from "@/lib/browser-fs"
 
-export type InferenceProvider = 'local' | 'anthropic' | 'openai' | 'gemini' | 'ollama';
+export type InferenceProvider = 'local' | 'anthropic' | 'openai' | 'gemini' | 'ollama' | 'llamacpp';
 export type AppView = 'dashboard' | 'editor' | 'style_detective' | 'vault' | 'history';
 
 export type FileItem = {
@@ -25,6 +25,7 @@ export interface AppState {
   inferenceProvider: InferenceProvider;
   keyStatus: Record<string, boolean>;
   ollamaConfig: { url: string; model: string; useDefaultUrl: boolean };
+  llamacppConfig: { url: string };
   fileTree: FileItem[];
   activeFilePath: string | null;
   isFetchingTree: boolean;
@@ -44,9 +45,10 @@ function useAppStoreLogic(initialCode: string = "") {
       proposedCode: "",
       originalMetrics: initialCode ? calculateComplexity(initialCode) : null,
       proposedMetrics: null,
-      inferenceProvider: 'local',
+      inferenceProvider: 'ollama',
       keyStatus: {},
       ollamaConfig: { url: "http://127.0.0.1:11434", model: "qwen2.5-coder", useDefaultUrl: true },
+      llamacppConfig: { url: "http://127.0.0.1:8080" },
       fileTree: [],
       activeFilePath: null,
       isFetchingTree: false,
@@ -282,6 +284,9 @@ function useAppStoreLogic(initialCode: string = "") {
               url: config.ollamaUrl || prev.ollamaConfig.url,
               model: config.ollamaModel || prev.ollamaConfig.model,
               useDefaultUrl: config.ollamaUrl ? config.ollamaUrl === "http://127.0.0.1:11434" : prev.ollamaConfig.useDefaultUrl
+            },
+            llamacppConfig: {
+              url: config.llamacppUrl || prev.llamacppConfig.url
             }
           }));
         }
@@ -347,6 +352,27 @@ function useAppStoreLogic(initialCode: string = "") {
     }
   }, []);
 
+  const saveLlamacppConfig = useCallback(async (url: string) => {
+    try {
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ llamacppUrl: url })
+      });
+
+      if (response.ok) {
+        setState(prev => ({
+          ...prev,
+          llamacppConfig: { ...prev.llamacppConfig, url }
+        }));
+        return true;
+      }
+      return false;
+    } catch (err) {
+      return false;
+    }
+  }, []);
+
   const openDiff = useCallback((refactoredCode: string) => {
     setState(prev => ({
       ...prev,
@@ -399,6 +425,7 @@ function useAppStoreLogic(initialCode: string = "") {
     setInferenceProvider,
     saveApiKey,
     saveOllamaConfig,
+    saveLlamacppConfig,
     fetchWorkspaceTree,
     setWorkspaceRoot,
     openBrowserWorkspace,

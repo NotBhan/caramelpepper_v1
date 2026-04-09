@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
@@ -10,8 +11,7 @@ const CONFIG_PATH = path.join(process.cwd(), 'config.json');
 
 /**
  * AI Refactoring Router.
- * Handles switching between cloud Genkit providers and local Ollama inference.
- * Marked as force-dynamic to prevent build-time execution.
+ * Handles switching between cloud Genkit providers and local local inference engines.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -19,6 +19,10 @@ export async function POST(req: NextRequest) {
 
     if (provider === 'ollama') {
       return handleOllamaRefactor(code, language);
+    }
+
+    if (provider === 'llamacpp') {
+      return handleLlamaCppRefactor(code, language);
     }
 
     // Default to Genkit cloud providers (Gemini, etc.)
@@ -89,6 +93,59 @@ Format: JSON only.`;
     if (err.code === 'ECONNREFUSED' || err.message.includes('fetch failed')) {
       return NextResponse.json({ 
         error: 'Ollama Service Unavailable. Check if Ollama is running and CORS is allowed.' 
+      }, { status: 503 });
+    }
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
+async function handleLlamaCppRefactor(code: string, language: string) {
+  let config: Record<string, any> = { 
+    llamacppUrl: 'http://127.0.0.1:8080'
+  };
+
+  try {
+    const data = await fs.readFile(CONFIG_PATH, 'utf-8');
+    config = { ...config, ...JSON.parse(data) };
+  } catch (e) {}
+
+  const systemPrompt = `You are an expert code refactoring assistant.
+CRITICAL: Preserve 100% original vertical spacing. Do not minify.
+Format: JSON object with "refactoredCode", "suggestions" (array), "complexityAnalysis" (string).`;
+
+  const userPrompt = `Refactor this ${language} code:\n\n\`\`\`${language}\n${code}\n\`\`\``;
+
+  try {
+    const response = await fetch(`${config.llamacppUrl}/v1/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.1,
+        stream: false
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`llama.cpp server error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices[0].message.content;
+    
+    // Attempt to parse JSON from response (sometimes local LLMs wrap it in markdown)
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    const result = JSON.parse(jsonMatch ? jsonMatch[0] : content);
+    
+    return NextResponse.json(result);
+
+  } catch (err: any) {
+    if (err.code === 'ECONNREFUSED' || err.message.includes('fetch failed')) {
+      return NextResponse.json({ 
+        error: 'llama.cpp Server Unavailable. Ensure the server is running with --api flag.' 
       }, { status: 503 });
     }
     return NextResponse.json({ error: err.message }, { status: 500 });
