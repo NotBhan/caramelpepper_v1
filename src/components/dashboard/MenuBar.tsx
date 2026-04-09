@@ -23,17 +23,14 @@ import {
 import { useAppStore } from "@/store/use-app-store"
 
 export function MenuBar() {
-  const store = useAppStore("");
+  const store = useAppStore();
 
   const handleOpenLocalFile = async () => {
     await store.openLocalFile();
   }
 
-  const handleOpenSingleFile = async () => {
-    const path = prompt("Enter absolute file path:");
-    if (path) {
-      await store.openFile(path);
-    }
+  const handleOpenSingleFile = () => {
+    store.newFile();
   }
 
   const handleOpenFolder = () => {
@@ -60,7 +57,7 @@ export function MenuBar() {
             </MenubarItem>
             <MenubarItem onClick={handleOpenSingleFile} className="flex items-center gap-2 text-xs focus:bg-[#007acc] focus:text-[#ffffff]">
               <FileOutput className="w-3.5 h-3.5" />
-              Open Single File...
+              New Scratchpad...
             </MenubarItem>
             <MenubarItem onClick={handleOpenFolder} className="flex items-center gap-2 text-xs focus:bg-[#007acc] focus:text-[#ffffff]">
               <FolderOpen className="w-3.5 h-3.5" />

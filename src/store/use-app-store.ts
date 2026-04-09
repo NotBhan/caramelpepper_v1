@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react"
 import { type ComplexityMetrics, calculateComplexity } from "@/lib/complexity"
 
 export type InferenceProvider = 'local' | 'anthropic' | 'openai' | 'gemini' | 'ollama';
@@ -32,7 +32,9 @@ export interface AppState {
   activeView: AppView;
 }
 
-export function useAppStore(initialCode: string = "") {
+const AppContext = createContext<ReturnType<typeof useAppStoreLogic> | null>(null);
+
+function useAppStoreLogic(initialCode: string = "") {
   const [state, setState] = useState<AppState>(() => {
     return {
       code: initialCode,
@@ -92,7 +94,7 @@ export function useAppStore(initialCode: string = "") {
   }, [fetchWorkspaceTree]);
 
   const resetWorkspaceRoot = useCallback(() => {
-    setState(prev => ({ ...prev, workspaceRoot: null, fileTree: [], isPickerDismissed: false }));
+    setState(prev => ({ ...prev, workspaceRoot: null, fileTree: [], isPickerDismissed: false, activeView: 'editor' }));
   }, []);
 
   const dismissPicker = useCallback(() => {
@@ -119,10 +121,24 @@ export function useAppStore(initialCode: string = "") {
         isDiffOpen: false,
         proposedCode: "",
         isDirty: false,
+        activeView: 'editor'
       }));
     } catch (err) {
       console.error("[WORKSPACE]: Error reading file", err);
     }
+  }, []);
+
+  const newFile = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      code: "",
+      activeFilePath: "untitled.ts",
+      originalMetrics: calculateComplexity(""),
+      isDiffOpen: false,
+      proposedCode: "",
+      isDirty: false,
+      activeView: 'editor'
+    }));
   }, []);
 
   const closeActiveFile = useCallback(() => {
@@ -162,6 +178,7 @@ export function useAppStore(initialCode: string = "") {
         isDiffOpen: false,
         proposedCode: "",
         isDirty: false,
+        activeView: 'editor'
       }));
     } catch (err) {
       console.log("File selection cancelled");
@@ -169,7 +186,11 @@ export function useAppStore(initialCode: string = "") {
   }, []);
 
   const saveActiveFile = useCallback(async () => {
-    if (!state.activeFilePath) return;
+    if (!state.activeFilePath || state.activeFilePath === 'untitled.ts') {
+      const newName = prompt("Enter file path to save as:");
+      if (newName) await saveFileAs(newName);
+      return;
+    }
     try {
       const response = await fetch('/api/workspace/save', {
         method: 'POST',
@@ -349,10 +370,24 @@ export function useAppStore(initialCode: string = "") {
     resetWorkspaceRoot,
     dismissPicker,
     openFile,
+    newFile,
     closeActiveFile,
     saveActiveFile,
     saveFileAs,
     openLocalFile,
     setActiveView,
   };
+}
+
+export function AppProvider({ children }: { children: React.ReactNode }) {
+  const store = useAppStoreLogic("");
+  return React.createElement(AppContext.Provider, { value: store }, children);
+}
+
+export function useAppStore() {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error("useAppStore must be used within an AppProvider");
+  }
+  return context;
 }

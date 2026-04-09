@@ -15,7 +15,7 @@ import { MenuBar } from "@/components/dashboard/MenuBar"
 import { WorkspacePickerModal } from "@/components/dashboard/WorkspacePickerModal"
 
 export default function Dashboard() {
-  const store = useAppStore("")
+  const store = useAppStore()
   const [styleReport, setStyleReport] = React.useState<any>(null)
   const [refactorOutput, setRefactorOutput] = React.useState<any>(null)
   const [isBusy, setIsBusy] = React.useState(false)
@@ -23,6 +23,7 @@ export default function Dashboard() {
   const { toast } = useToast()
 
   const handleAnalyze = async () => {
+    if (!store.code) return;
     setIsBusy(true)
     setRefactorOutput(null)
     try {
