@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 import { SettingsModal } from "@/components/dashboard/SettingsModal"
 import { MenuBar } from "@/components/dashboard/MenuBar"
 import { WorkspacePickerModal } from "@/components/dashboard/WorkspacePickerModal"
+import { getLanguageFromPath } from "@/lib/language-mapper"
 
 export default function Dashboard() {
   const store = useAppStore()
@@ -26,29 +27,37 @@ export default function Dashboard() {
     if (!store.code) return;
     setIsBusy(true)
     setRefactorOutput(null)
+    
+    let detectedStyle = null;
+
     try {
-      // 1. Backend isolated Style Analysis
+      // 1. Backend isolated Style Analysis (Non-blocking)
       const styleResponse = await fetch('/api/ai/analyze-style', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: store.code })
       });
       
-      if (!styleResponse.ok) {
-        throw new Error('Style analysis engine failure');
+      if (styleResponse.ok) {
+        detectedStyle = await styleResponse.json();
+        setStyleReport(detectedStyle);
+      } else {
+        console.warn('Style analysis engine skipped or failed. Proceeding with standard refactoring.');
       }
-      
-      const styleData = await styleResponse.json();
-      setStyleReport(styleData);
+    } catch (err) {
+      console.warn('Style detective connection failed:', err);
+    }
 
+    try {
       // 2. Backend isolated Refactoring
       const refactorResponse = await fetch('/api/ai/refactor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           code: store.code,
-          language: 'typescript',
-          provider: store.inferenceProvider
+          language: getLanguageFromPath(store.activeFilePath),
+          provider: store.inferenceProvider,
+          style: detectedStyle
         })
       });
 
@@ -65,13 +74,13 @@ export default function Dashboard() {
       }
 
       toast({
-        title: "Analysis Complete",
-        description: `Provider: ${store.inferenceProvider.toUpperCase()} | Risk: ${store.originalMetrics?.risk.toUpperCase()}`,
+        title: "Optimization Strategy Ready",
+        description: `Risk: ${store.originalMetrics?.risk.toUpperCase()} | Suggestions: ${refactorResult.suggestions?.length || 0}`,
       })
     } catch (err: any) {
       toast({
-        title: "Inference Error",
-        description: err.message || "Engine failed. Check your configuration.",
+        title: "Optimization Failed",
+        description: err.message || "Refactoring engine failed. Check your local AI connection.",
         variant: "destructive",
       })
     } finally {

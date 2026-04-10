@@ -14,17 +14,19 @@ import {z} from 'genkit';
  * Input schema for the localCodeRefactoring flow.
  * @property {string} code - The code snippet or file content to be analyzed for refactoring suggestions.
  * @property {string} [language] - The programming language of the code (e.g., "typescript", "javascript", "python").
+ * @property {any} [style] - Optional detected style rules to maintain alignment with the repository.
  */
 const LocalCodeRefactoringInputSchema = z.object({
   code: z.string().describe('The code snippet or file content to be analyzed for refactoring suggestions.'),
   language: z.string().optional().describe('The programming language of the code (e.g., "typescript", "javascript", "python").'),
+  style: z.any().optional().describe('The detected code style to maintain during refactoring.'),
 });
 export type LocalCodeRefactoringInput = z.infer<typeof LocalCodeRefactoringInputSchema>;
 
 /**
  * Output schema for the localCodeRefactoring flow.
- * @property {string} refactoredCode - The completely refactored version of the input code, if applicable. If no full refactoring is provided, this field might be empty or the original code.
- * @property {string[]} suggestions - A list of specific, actionable refactoring suggestions to improve code quality, maintainability, or reduce complexity.
+ * @property {string} refactoredCode - The completely refactored version of the input code.
+ * @property {string[]} suggestions - A list of specific, actionable refactoring suggestions.
  * @property {string} complexityAnalysis - A brief analysis of the code's complexity.
  */
 const LocalCodeRefactoringOutputSchema = z.object({
@@ -56,9 +58,20 @@ You are a strict code formatter. You MUST preserve 100% of the original vertical
 - Maintain the exact original paragraphing of the source code.
 - Failure to preserve original blank lines is a critical failure.
 
+### STYLE ALIGNMENT ###
+{{#if style}}
+Maintain the following detected code style rules for this repository:
+- Naming Convention: {{{style.namingConvention}}}
+- Indentation: {{{style.indentation}}}
+- Brace Style: {{{style.braceStyle}}}
+- Quote Style: {{{style.quoteStyle}}}
+{{else}}
+Use standard industry best practices for the language.
+{{/if}}
+
 Your goal is to analyze the provided code and offer context-aware, privacy-preserving refactoring suggestions.
 Focus on identifying areas of high complexity, potential bugs, readability issues, and suggesting improvements while adhering to good coding practices.
-If a full refactoring of the code is straightforward and significantly improves it, provide the \`refactoredCode\`. Otherwise, provide detailed \`suggestions\` and a brief \`complexityAnalysis\`.
+Provide the \`refactoredCode\`, detailed \`suggestions\`, and a brief \`complexityAnalysis\`.
 
 Consider the following code written in {{#if language}}{{language}}{{else}}an unspecified language{{/if}}:
 

@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
@@ -6,7 +5,6 @@ import { localCodeRefactoring } from '@/ai/flows/local-code-refactoring';
 
 export const dynamic = 'force-dynamic';
 
-const VAULT_PATH = path.join(process.cwd(), 'secrets.json');
 const CONFIG_PATH = path.join(process.cwd(), 'config.json');
 
 /**
@@ -15,18 +13,18 @@ const CONFIG_PATH = path.join(process.cwd(), 'config.json');
  */
 export async function POST(req: NextRequest) {
   try {
-    const { code, language, provider } = await req.json();
+    const { code, language, provider, style } = await req.json();
 
     if (provider === 'ollama') {
-      return handleOllamaRefactor(code, language);
+      return handleOllamaRefactor(code, language, style);
     }
 
     if (provider === 'llamacpp') {
-      return handleLlamaCppRefactor(code, language);
+      return handleLlamaCppRefactor(code, language, style);
     }
 
     // Default to Genkit cloud providers (Gemini, etc.)
-    const result = await localCodeRefactoring({ code, language });
+    const result = await localCodeRefactoring({ code, language, style });
     return NextResponse.json(result);
 
   } catch (err: any) {
@@ -35,7 +33,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function handleOllamaRefactor(code: string, language: string) {
+async function handleOllamaRefactor(code: string, language: string, style?: any) {
   let config: Record<string, any> = { 
     ollamaUrl: 'http://127.0.0.1:11434', 
     ollamaModel: 'qwen2.5-coder' 
@@ -49,17 +47,13 @@ async function handleOllamaRefactor(code: string, language: string) {
   const systemPrompt = `You are an expert code refactoring assistant.
 CRITICAL CONSTRAINT: VERTICAL PACING
 You MUST preserve 100% of the original vertical spacing.
-- If the original code has an empty line between blocks, your output MUST have an empty line in the same place.
-- Do not compress or minify the code.
-- Maintain the exact original paragraphing.
+${style ? `STYLE ALIGNMENT:
+- Naming: ${style.namingConvention}
+- Indentation: ${style.indentation}
+- Braces: ${style.braceStyle}` : ''}
 
-Your goal is to improve code quality, maintainability, and reduce complexity.
-Provide your response as a JSON object with:
-"refactoredCode": The improved source code.
-"suggestions": A list of specific improvements made.
-"complexityAnalysis": A brief analysis of the code's complexity.
-
-Format: JSON only.`;
+Your goal is to improve code quality and reduce complexity.
+Provide response as a JSON object with: "refactoredCode", "suggestions" (array), "complexityAnalysis" (string).`;
 
   const userPrompt = `Refactor this ${language} code:\n\n\`\`\`${language}\n${code}\n\`\`\``;
 
@@ -79,9 +73,6 @@ Format: JSON only.`;
     });
 
     if (!response.ok) {
-      if (response.status === 404) {
-        throw new Error(`Model '${config.ollamaModel}' not found in Ollama. Please run 'ollama pull ${config.ollamaModel}'.`);
-      }
       throw new Error(`Ollama error: ${response.statusText}`);
     }
 
@@ -90,16 +81,11 @@ Format: JSON only.`;
     return NextResponse.json(result);
 
   } catch (err: any) {
-    if (err.code === 'ECONNREFUSED' || err.message.includes('fetch failed')) {
-      return NextResponse.json({ 
-        error: 'Ollama Service Unavailable. Check if Ollama is running and CORS is allowed.' 
-      }, { status: 503 });
-    }
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
-async function handleLlamaCppRefactor(code: string, language: string) {
+async function handleLlamaCppRefactor(code: string, language: string, style?: any) {
   let config: Record<string, any> = { 
     llamacppUrl: 'http://127.0.0.1:8080'
   };
@@ -111,6 +97,7 @@ async function handleLlamaCppRefactor(code: string, language: string) {
 
   const systemPrompt = `You are an expert code refactoring assistant.
 CRITICAL: Preserve 100% original vertical spacing. Do not minify.
+${style ? `Use style: ${style.namingConvention}, ${style.indentation}` : ''}
 Format: JSON object with "refactoredCode", "suggestions" (array), "complexityAnalysis" (string).`;
 
   const userPrompt = `Refactor this ${language} code:\n\n\`\`\`${language}\n${code}\n\`\`\``;
@@ -135,19 +122,12 @@ Format: JSON object with "refactoredCode", "suggestions" (array), "complexityAna
 
     const data = await response.json();
     const content = data.choices[0].message.content;
-    
-    // Attempt to parse JSON from response (sometimes local LLMs wrap it in markdown)
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     const result = JSON.parse(jsonMatch ? jsonMatch[0] : content);
     
     return NextResponse.json(result);
 
   } catch (err: any) {
-    if (err.code === 'ECONNREFUSED' || err.message.includes('fetch failed')) {
-      return NextResponse.json({ 
-        error: 'llama.cpp Server Unavailable. Ensure the server is running with --api flag.' 
-      }, { status: 503 });
-    }
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
