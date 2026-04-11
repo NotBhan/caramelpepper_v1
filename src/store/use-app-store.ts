@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { type ComplexityMetrics, calculateComplexity } from "@/lib/complexity"
 import { readDirectoryRecursive } from "@/lib/browser-fs"
 import { auth, githubProvider } from "@/lib/firebase"
-import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut, User } from "firebase/auth"
+import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut, signInAnonymously, User } from "firebase/auth"
 
 export type InferenceProvider = 'local' | 'anthropic' | 'openai' | 'gemini' | 'ollama' | 'llamacpp';
 export type AppView = 'dashboard' | 'editor' | 'style_detective' | 'vault' | 'history';
@@ -70,8 +70,18 @@ function useAppStoreLogic(initialCode: string = "") {
       setState(prev => ({ ...prev, loadingAuth: false }));
       return;
     }
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setState(prev => ({ ...prev, user, loadingAuth: false }));
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        // Automatically sign in anonymously if no user is present
+        try {
+          await signInAnonymously(auth);
+        } catch (error) {
+          console.error("Anonymous sign-in failed", error);
+          setState(prev => ({ ...prev, loadingAuth: false }));
+        }
+      } else {
+        setState(prev => ({ ...prev, user, loadingAuth: false }));
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -82,6 +92,7 @@ function useAppStoreLogic(initialCode: string = "") {
       return;
     }
     try {
+      // signInWithPopup can be used to link an existing anonymous account or sign in fresh
       await signInWithPopup(auth, githubProvider);
     } catch (error) {
       console.error("Login failed", error);
@@ -92,7 +103,7 @@ function useAppStoreLogic(initialCode: string = "") {
     if (!auth) return;
     try {
       await firebaseSignOut(auth);
-      setState(prev => ({ ...prev, user: null }));
+      // After signing out, the listener will trigger an anonymous sign-in again
     } catch (error) {
       console.error("Logout failed", error);
     }
@@ -402,6 +413,7 @@ function useAppStoreLogic(initialCode: string = "") {
     setActiveView,
     toggleMobileMenu,
     closeMobileMenu,
+    isGuest: state.user?.isAnonymous || false
   };
 }
 

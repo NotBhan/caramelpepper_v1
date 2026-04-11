@@ -15,7 +15,8 @@ import {
   Fingerprint,
   User as UserIcon,
   LogOut,
-  Github
+  Github,
+  UserCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { FileExplorer } from "./FileExplorer"
@@ -89,6 +90,8 @@ export function Sidebar({
 }: SidebarProps) {
   const store = useAppStore();
 
+  const isGuest = store.user?.isAnonymous;
+
   return (
     <div className={cn(
       "h-full flex overflow-hidden fixed inset-y-0 left-0 z-50 transform transition-transform duration-200 ease-in-out md:relative md:translate-x-0 bg-[#252526]",
@@ -137,7 +140,7 @@ export function Sidebar({
           <Popover>
             <PopoverTrigger asChild>
               <button className="w-full aspect-square flex items-center justify-center text-[#858585] hover:text-[#cccccc]">
-                {store.user ? (
+                {store.user && !isGuest ? (
                   <Avatar className="w-7 h-7 border border-[#3c3c3c]">
                     <AvatarImage src={store.user.photoURL || undefined} />
                     <AvatarFallback className="bg-[#1e1e1e] text-[10px] text-[#ffffff]">
@@ -145,12 +148,12 @@ export function Sidebar({
                     </AvatarFallback>
                   </Avatar>
                 ) : (
-                  <UserIcon className="w-6 h-6" />
+                  <UserCircle className={cn("w-6 h-6", isGuest && "text-amber-500/70")} />
                 )}
               </button>
             </PopoverTrigger>
-            <PopoverContent side="right" align="end" className="w-56 bg-[#252526] border-[#3c3c3c] p-2 text-[#cccccc]">
-              {store.user ? (
+            <PopoverContent side="right" align="end" className="w-64 bg-[#252526] border-[#3c3c3c] p-2 text-[#cccccc]">
+              {store.user && !isGuest ? (
                 <div className="space-y-2">
                   <div className="px-2 py-1.5 border-b border-[#3c3c3c]">
                     <p className="text-xs font-bold text-[#ffffff] truncate">{store.user.displayName || "User"}</p>
@@ -165,14 +168,23 @@ export function Sidebar({
                   </button>
                 </div>
               ) : (
-                <div className="p-2 space-y-3">
-                  <p className="text-[11px] text-[#858585]">Sign in to isolate your data and sync settings across devices.</p>
+                <div className="p-3 space-y-3">
+                  <div className="space-y-1">
+                    <p className="text-[12px] font-bold text-[#ffffff]">
+                      {isGuest ? "Guest Session Active" : "Sign In Required"}
+                    </p>
+                    <p className="text-[11px] text-[#858585] leading-relaxed">
+                      {isGuest 
+                        ? "You are using a temporary session. Your API keys and history will be lost if you clear your browser data."
+                        : "Sign in to isolate your data and sync settings across devices."}
+                    </p>
+                  </div>
                   <Button 
                     onClick={() => { store.login(); store.closeMobileMenu(); }}
-                    className="w-full h-8 bg-[#ffffff] text-[#000000] hover:bg-[#cccccc] text-xs font-bold gap-2"
+                    className="w-full h-9 bg-[#ffffff] text-[#000000] hover:bg-[#cccccc] text-xs font-bold gap-2"
                   >
                     <Github className="w-3.5 h-3.5" />
-                    Sign in with GitHub
+                    {isGuest ? "Upgrade with GitHub" : "Sign in with GitHub"}
                   </Button>
                 </div>
               )}
