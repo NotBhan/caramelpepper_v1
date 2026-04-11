@@ -11,16 +11,16 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Comprehensive validation for Firebase initialization
-// Requires both API Key and Auth Domain to be properly set
+/**
+ * Validates if the Firebase configuration is present and not using placeholder values.
+ */
 const isConfigured = 
   !!firebaseConfig.apiKey && 
   firebaseConfig.apiKey !== 'undefined' &&
-  firebaseConfig.apiKey !== 'your_api_key' &&
-  !firebaseConfig.apiKey.startsWith('your_') &&
+  !firebaseConfig.apiKey.includes('your_') &&
   !!firebaseConfig.authDomain &&
   firebaseConfig.authDomain !== 'undefined' &&
-  !firebaseConfig.authDomain.startsWith('your_');
+  !firebaseConfig.authDomain.includes('your_');
 
 let app = null;
 let auth = null;
@@ -35,8 +35,9 @@ if (isConfigured) {
     console.error("[FIREBASE]: Initialization failed. Check your environment variables.", error);
   }
 } else {
-  if (typeof window !== 'undefined') {
-    console.warn("[AUTH]: Firebase is partially or incorrectly configured. Cloud features are disabled. Ensure NEXT_PUBLIC_FIREBASE_API_KEY and NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN are set in .env.");
+  // Silent fallback for Local-Only mode
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    console.info("[OCTAMIND]: Firebase is not configured. IDE is running in Local-Only mode.");
   }
 }
 

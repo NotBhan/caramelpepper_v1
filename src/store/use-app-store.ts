@@ -75,6 +75,7 @@ function useAppStoreLogic(initialCode: string = "") {
 
   useEffect(() => {
     if (!auth || !isConfigured) {
+      // Immediately resolve loading state if cloud features are disabled
       setState(prev => ({ ...prev, loadingAuth: false }));
       return;
     }
@@ -84,7 +85,7 @@ function useAppStoreLogic(initialCode: string = "") {
         try {
           await signInAnonymously(auth);
         } catch (error: any) {
-          console.warn("[AUTH]: Anonymous entry failed. Check if Anonymous Auth is enabled in your Firebase Console.", error.message);
+          console.warn("[AUTH]: Anonymous entry failed.", error.message);
           setState(prev => ({ ...prev, loadingAuth: false }));
         }
       } else {
@@ -97,7 +98,7 @@ function useAppStoreLogic(initialCode: string = "") {
 
   const login = useCallback(async () => {
     if (!auth || !isConfigured) {
-      alert("Octamind AI: Cloud features (Authentication) are not correctly configured. Please ensure your .env file contains valid Firebase API Key and Auth Domain.");
+      alert("Octamind AI Cloud Error: Firebase is not configured. Please add your credentials to the .env file to enable GitHub Authentication.");
       return;
     }
     
@@ -116,14 +117,12 @@ function useAppStoreLogic(initialCode: string = "") {
         await signInWithPopup(auth, githubProvider);
       }
     } catch (error: any) {
-      console.error("[AUTH]: Login/Link failed.", error.message);
+      console.error("[AUTH]: Authentication failed.", error.message);
       
       if (error.code === 'auth/api-key-not-valid') {
-        alert("Octamind AI: The Firebase API Key provided is invalid.");
+        alert("Octamind AI: The Firebase API Key in your .env file is invalid.");
       } else if (error.code === 'auth/auth-domain-config-required') {
-        alert("Octamind AI: Auth Domain is missing in configuration. Check your .env file.");
-      } else if (error.code === 'auth/unauthorized-domain') {
-        alert("Octamind AI: This domain is not authorized in your Firebase Console.");
+        alert("Octamind AI: Auth Domain is missing. Ensure NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN is set.");
       } else if (error.code !== 'auth/popup-closed-by-user') {
         alert(`Authentication error: ${error.message}`);
       }
@@ -253,26 +252,6 @@ function useAppStoreLogic(initialCode: string = "") {
     }));
   }, []);
 
-  const saveActiveFile = useCallback(async () => {
-    if (!state.activeFilePath || state.activeFilePath === 'untitled.ts') {
-      const newName = prompt("Enter file path to save as:");
-      if (newName) await saveFileAs(newName);
-      return;
-    }
-    try {
-      const response = await fetch('/api/workspace/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: state.activeFilePath, content: state.code })
-      });
-      if (response.ok) {
-        setState(prev => ({ ...prev, isDirty: false }));
-      }
-    } catch (err) {
-      console.error("[WORKSPACE]: Save failed", err);
-    }
-  }, [state.activeFilePath, state.code]);
-
   const saveFileAs = useCallback(async (newPath: string) => {
     try {
       const response = await fetch('/api/workspace/save', {
@@ -294,6 +273,26 @@ function useAppStoreLogic(initialCode: string = "") {
       console.error("[WORKSPACE]: Save As failed", err);
     }
   }, [state.code, state.workspaceRoot, fetchWorkspaceTree]);
+
+  const saveActiveFile = useCallback(async () => {
+    if (!state.activeFilePath || state.activeFilePath === 'untitled.ts') {
+      const newName = prompt("Enter file path to save as:");
+      if (newName) await saveFileAs(newName);
+      return;
+    }
+    try {
+      const response = await fetch('/api/workspace/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: state.activeFilePath, content: state.code })
+      });
+      if (response.ok) {
+        setState(prev => ({ ...prev, isDirty: false }));
+      }
+    } catch (err) {
+      console.error("[WORKSPACE]: Save failed", err);
+    }
+  }, [state.activeFilePath, state.code, saveFileAs]);
 
   const setInferenceProvider = useCallback((provider: InferenceProvider) => {
     const isCloud = ['openai', 'anthropic', 'gemini'].includes(provider);
