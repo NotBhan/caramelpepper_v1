@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from "react"
@@ -28,7 +29,7 @@ export function WorkspaceLayout({
   isDiffOpen = false,
   activeView
 }: WorkspaceLayoutProps) {
-  const LAYOUT_KEY = "caramel-pepper-layout"
+  const LAYOUT_KEY = "octamind-ai-layout-v1"
   const [isMounted, setIsMounted] = React.useState(false)
 
   React.useEffect(() => {
@@ -41,15 +42,16 @@ export function WorkspaceLayout({
     }
   }
 
+  // Prevent hydration mismatch by rendering a skeleton or empty state initially
   if (!isMounted) {
     return <div className="h-full w-full bg-[#1e1e1e]" />
   }
 
-  // If not in editor view, show a simpler full-screen panel layout for other views
+  // Handle non-editor views with a stable, non-resizable container
   if (activeView !== 'editor') {
     return (
       <div className="h-full w-full flex bg-[#1e1e1e]">
-        <div className="w-auto h-full shrink-0">
+        <div className="w-auto h-full shrink-0 border-r border-[#3c3c3c]">
           {sidebar}
         </div>
         <div className="flex-1 min-w-0">
@@ -64,9 +66,15 @@ export function WorkspaceLayout({
 
   return (
     <div className="h-full w-full overflow-hidden bg-[#1e1e1e] text-[#cccccc] flex flex-col">
-      <PanelGroup direction="horizontal" onLayout={onLayout}>
+      <PanelGroup 
+        id="main-horizontal-group"
+        direction="horizontal" 
+        onLayout={onLayout}
+        autoSaveId="octamind-main-layout"
+      >
         {/* Project Explorer / Sidebar */}
         <Panel
+          id="sidebar-panel"
           defaultSize={15}
           minSize={10}
           maxSize={25}
@@ -75,25 +83,25 @@ export function WorkspaceLayout({
           {sidebar}
         </Panel>
 
-        <ResizeHandle direction="vertical" />
+        <ResizeHandle direction="vertical" id="sidebar-resizer" />
 
         {/* Main Workspace Area */}
-        <Panel defaultSize={65}>
-          <PanelGroup direction="vertical">
-            <Panel defaultSize={80} minSize={20}>
-              <PanelGroup direction="horizontal">
+        <Panel id="workspace-panel" defaultSize={65}>
+          <PanelGroup id="main-vertical-group" direction="vertical">
+            <Panel id="top-editor-panel" defaultSize={80} minSize={20}>
+              <PanelGroup id="editor-diff-group" direction="horizontal">
                 {/* Primary Code Editor */}
-                <Panel defaultSize={isDiffOpen ? 40 : 100} minSize={10}>
+                <Panel id="primary-editor" defaultSize={isDiffOpen ? 40 : 100} minSize={10}>
                   <div className="h-full transition-all duration-300 ease-in-out">
                     {editor}
                   </div>
                 </Panel>
                 
-                {isDiffOpen && <ResizeHandle direction="vertical" />}
+                {isDiffOpen && <ResizeHandle direction="vertical" id="diff-resizer" />}
 
                 {/* AI Refactor Preview / Diff */}
                 {isDiffOpen && (
-                  <Panel defaultSize={60} minSize={10}>
+                  <Panel id="diff-preview-panel" defaultSize={60} minSize={10}>
                     <div className="h-full animate-in slide-in-from-right duration-300">
                       {refactor}
                     </div>
@@ -102,19 +110,20 @@ export function WorkspaceLayout({
               </PanelGroup>
             </Panel>
 
-            <ResizeHandle direction="horizontal" />
+            <ResizeHandle direction="horizontal" id="bottom-panel-resizer" />
 
             {/* Terminal / Health / Logs */}
-            <Panel defaultSize={20} minSize={0} collapsible>
+            <Panel id="bottom-console-panel" defaultSize={20} minSize={0} collapsible>
               {bottom}
             </Panel>
           </PanelGroup>
         </Panel>
 
-        <ResizeHandle direction="vertical" />
+        <ResizeHandle direction="vertical" id="analysis-panel-resizer" />
 
         {/* Right Analysis Panel */}
         <Panel
+          id="right-analysis-panel"
           defaultSize={20}
           minSize={15}
           maxSize={30}
@@ -128,13 +137,16 @@ export function WorkspaceLayout({
 
 function ResizeHandle({ 
   className, 
-  direction = "vertical" 
+  direction = "vertical",
+  id
 }: { 
   className?: string;
-  direction?: "horizontal" | "vertical" 
+  direction?: "horizontal" | "vertical";
+  id: string;
 }) {
   return (
     <PanelResizeHandle
+      id={id}
       className={cn(
         "relative flex items-center justify-center bg-[#1e1e1e] transition-colors hover:bg-[#007acc]/50 group",
         direction === "vertical" ? "w-1 cursor-col-resize border-l border-[#3c3c3c]" : "h-1 cursor-row-resize border-t border-[#3c3c3c]",
