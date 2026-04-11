@@ -1,9 +1,12 @@
+
 {
-  "name": "nextn",
+  "name": "octamind-ai",
   "version": "0.1.0",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev -p 9002",
+    "dev:electron": "concurrently \"npm run dev\" \"wait-on tcp:9002 && electron .\"",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "build": "NODE_ENV=production next build",
@@ -60,9 +63,13 @@
     "@types/node": "^20",
     "@types/react": "^19.2.1",
     "@types/react-dom": "^19.2.1",
+    "concurrently": "^9.1.0",
+    "electron": "^33.2.1",
+    "electron-builder": "^24.13.3",
     "genkit-cli": "^1.28.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wait-on": "^8.0.1"
   }
 }
