@@ -22,7 +22,8 @@ const isConfigured =
   !firebaseConfig.apiKey.includes('your_') &&
   !!firebaseConfig.authDomain &&
   firebaseConfig.authDomain !== 'undefined' &&
-  !firebaseConfig.authDomain.includes('your_');
+  !firebaseConfig.authDomain.includes('your_') &&
+  firebaseConfig.authDomain.includes('.'); // Ensure it's a valid domain format
 
 let app = null;
 let auth = null;
