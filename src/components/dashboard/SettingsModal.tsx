@@ -2,7 +2,7 @@
 "use client"
 
 import React from "react"
-import { Settings, Cpu, ShieldCheck, Key, Globe, Server, Cloud, Laptop } from "lucide-react"
+import { Settings, Cpu, ShieldCheck, Key, Globe, Server, Cloud, Laptop, Lock, Github } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -21,9 +21,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import { type InferenceProvider } from "@/store/use-app-store"
+import { type InferenceProvider, useAppStore } from "@/store/use-app-store"
 import { useToast } from "@/hooks/use-toast"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 
 interface SettingsModalProps {
@@ -51,6 +50,7 @@ export function SettingsModal({
   llamacppConfig,
   onSaveLlamacpp
 }: SettingsModalProps) {
+  const store = useAppStore()
   const [tempKey, setTempKey] = React.useState("")
   const [useDefaultOllama, setUseDefaultOllama] = React.useState(ollamaConfig?.useDefaultUrl ?? true)
   const [tempOllamaUrl, setTempOllamaUrl] = React.useState(ollamaConfig?.url || "http://127.0.0.1:11434")
@@ -60,10 +60,10 @@ export function SettingsModal({
   const [isTesting, setIsTesting] = React.useState(false)
   const { toast } = useToast()
 
-  // Determine current group (Cloud vs Local)
   const isCloudProvider = ['openai', 'anthropic', 'gemini'].includes(provider)
   const [activeGroup, setActiveGroup] = React.useState<'cloud' | 'local'>(isCloudProvider ? 'cloud' : 'local')
 
+  const isGuest = store.user?.isAnonymous || false
   const activeOllamaUrl = useDefaultOllama ? "http://127.0.0.1:11434" : tempOllamaUrl
 
   const handleSaveKey = async () => {
@@ -146,7 +146,6 @@ export function SettingsModal({
         </div>
 
         <div className="px-6 pb-6 space-y-6">
-          {/* Segmented Control: Cloud vs Local */}
           <div className="p-1 bg-slate-950 border border-slate-800 rounded-lg flex">
             <button
               onClick={() => setActiveGroup('cloud')}
@@ -175,166 +174,185 @@ export function SettingsModal({
           </div>
 
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                <Cpu className="w-3.5 h-3.5" />
-                Active Model Provider
-              </Label>
-              <Select 
-                value={provider} 
-                onValueChange={(v) => {
-                  onProviderChange(v as InferenceProvider)
-                }}
-              >
-                <SelectTrigger className="bg-slate-950 border-slate-800 h-10">
-                  <SelectValue placeholder="Select provider" />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-950 border-slate-800 text-slate-100">
-                  {activeGroup === 'cloud' ? (
-                    <>
-                      <SelectItem value="openai">OpenAI (GPT-4o)</SelectItem>
-                      <SelectItem value="anthropic">Anthropic (Claude 3.5)</SelectItem>
-                      <SelectItem value="gemini">Google (Gemini 2.0)</SelectItem>
-                    </>
-                  ) : (
-                    <>
-                      <SelectItem value="ollama">Ollama (Local API)</SelectItem>
-                      <SelectItem value="llamacpp">llama.cpp (Local Server)</SelectItem>
-                    </>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Provider-Specific Configuration */}
-            {activeGroup === 'cloud' && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                      <Key className="w-3.5 h-3.5" />
-                      {provider.toUpperCase()} API Key
-                    </Label>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Input
-                      type="password"
-                      placeholder={keyStatus[provider] ? "••••••••••••••••" : "Enter API Key"}
-                      value={tempKey}
-                      onChange={(e) => setTempKey(e.target.value)}
-                      className="bg-slate-950 border-slate-800 focus:ring-[#007acc] h-10"
-                    />
-                    <Button 
-                      onClick={handleSaveKey} 
-                      disabled={!tempKey || isSaving}
-                      size="sm"
-                      className="bg-[#007acc] hover:bg-[#0062a3] text-[#ffffff] font-bold px-6 h-10"
-                    >
-                      Save
-                    </Button>
-                  </div>
-                  <p className="text-[10px] text-slate-500 flex items-center gap-1 italic">
-                    <ShieldCheck className="w-3 h-3 text-green-500" />
-                    Stored securely in backend secrets vault.
+            {activeGroup === 'cloud' && isGuest ? (
+              <div className="py-8 px-4 text-center space-y-4 animate-in fade-in zoom-in duration-300 bg-slate-950/50 rounded-lg border border-slate-800/50 backdrop-blur-sm">
+                <div className="w-12 h-12 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto shadow-inner">
+                  <Lock className="w-6 h-6 text-amber-500" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-sm font-bold text-slate-100">Premium APIs Locked</h3>
+                  <p className="text-[11px] text-slate-500 leading-relaxed max-w-[240px] mx-auto">
+                    Cloud providers like Gemini, OpenAI, and Anthropic require a secure GitHub account to manage persistent credentials.
                   </p>
                 </div>
+                <Button 
+                  onClick={() => store.login()}
+                  className="bg-white text-black hover:bg-slate-200 text-xs font-bold h-9 px-6 gap-2"
+                >
+                  <Github className="w-3.5 h-3.5" />
+                  Sign in with GitHub
+                </Button>
               </div>
-            )}
-
-            {activeGroup === 'local' && provider === 'ollama' && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-[11px] font-bold text-slate-100 uppercase">Use Default URL</Label>
-                    <p className="text-[10px] text-slate-500 font-mono">http://127.0.0.1:11434</p>
-                  </div>
-                  <Switch checked={useDefaultOllama} onCheckedChange={setUseDefaultOllama} />
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                    <Cpu className="w-3.5 h-3.5" />
+                    Active Model Provider
+                  </Label>
+                  <Select 
+                    value={provider} 
+                    onValueChange={(v) => {
+                      onProviderChange(v as InferenceProvider)
+                    }}
+                  >
+                    <SelectTrigger className="bg-slate-950 border-slate-800 h-10">
+                      <SelectValue placeholder="Select provider" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-950 border-slate-800 text-slate-100">
+                      {activeGroup === 'cloud' ? (
+                        <>
+                          <SelectItem value="openai">OpenAI (GPT-4o)</SelectItem>
+                          <SelectItem value="anthropic">Anthropic (Claude 3.5)</SelectItem>
+                          <SelectItem value="gemini">Google (Gemini 2.0)</SelectItem>
+                        </>
+                      ) : (
+                        <>
+                          <SelectItem value="ollama">Ollama (Local API)</SelectItem>
+                          <SelectItem value="llamacpp">llama.cpp (Local Server)</SelectItem>
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                {!useDefaultOllama && (
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                      <Globe className="w-3 h-3" />
-                      Ollama Base URL
-                    </Label>
-                    <Input
-                      placeholder="http://127.0.0.1:11434"
-                      value={tempOllamaUrl}
-                      onChange={(e) => setTempOllamaUrl(e.target.value)}
-                      className="bg-slate-950 border-slate-800 h-10"
-                    />
+                {activeGroup === 'cloud' && (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                          <Key className="w-3.5 h-3.5" />
+                          {provider.toUpperCase()} API Key
+                        </Label>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Input
+                          type="password"
+                          placeholder={keyStatus[provider] ? "••••••••••••••••" : "Enter API Key"}
+                          value={tempKey}
+                          onChange={(e) => setTempKey(e.target.value)}
+                          className="bg-slate-950 border-slate-800 focus:ring-[#007acc] h-10"
+                        />
+                        <Button 
+                          onClick={handleSaveKey} 
+                          disabled={!tempKey || isSaving}
+                          size="sm"
+                          className="bg-[#007acc] hover:bg-[#0062a3] text-[#ffffff] font-bold px-6 h-10"
+                        >
+                          Save
+                        </Button>
+                      </div>
+                      <p className="text-[10px] text-slate-500 flex items-center gap-1 italic">
+                        <ShieldCheck className="w-3 h-3 text-green-500" />
+                        Stored securely in backend secrets vault.
+                      </p>
+                    </div>
                   </div>
                 )}
 
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                    <Server className="w-3 h-3" />
-                    Local Model Name
-                  </Label>
-                  <Input
-                    placeholder="qwen2.5-coder"
-                    value={tempOllamaModel}
-                    onChange={(e) => setTempOllamaModel(e.target.value)}
-                    className="bg-slate-950 border-slate-800 h-10"
-                  />
-                </div>
-                <div className="flex gap-2 pt-2">
-                  <Button 
-                    variant="outline"
-                    onClick={() => testConnection(activeOllamaUrl, '/api/tags')}
-                    disabled={isTesting}
-                    className="flex-1 border-slate-800 text-xs h-10"
-                  >
-                    Test Connection
-                  </Button>
-                  <Button 
-                    onClick={handleSaveOllama}
-                    disabled={isSaving || !tempOllamaModel}
-                    className="flex-1 bg-[#007acc] hover:bg-[#0062a3] text-[#ffffff] font-bold text-xs h-10"
-                  >
-                    Apply Config
-                  </Button>
-                </div>
-              </div>
-            )}
+                {activeGroup === 'local' && provider === 'ollama' && (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="p-3 bg-slate-950 border border-slate-800 rounded-lg flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label className="text-[11px] font-bold text-slate-100 uppercase">Use Default URL</Label>
+                        <p className="text-[10px] text-slate-500 font-mono">http://127.0.0.1:11434</p>
+                      </div>
+                      <Switch checked={useDefaultOllama} onCheckedChange={setUseDefaultOllama} />
+                    </div>
 
-            {activeGroup === 'local' && provider === 'llamacpp' && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                    <Globe className="w-3 h-3" />
-                    llama.cpp Server URL
-                  </Label>
-                  <Input
-                    placeholder="http://127.0.0.1:8080"
-                    value={tempLlamacppUrl}
-                    onChange={(e) => setTempLlamacppUrl(e.target.value)}
-                    className="bg-slate-950 border-slate-800 h-10"
-                  />
-                </div>
+                    {!useDefaultOllama && (
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                          <Globe className="w-3 h-3" />
+                          Ollama Base URL
+                        </Label>
+                        <Input
+                          placeholder="http://127.0.0.1:11434"
+                          value={tempOllamaUrl}
+                          onChange={(e) => setTempOllamaUrl(e.target.value)}
+                          className="bg-slate-950 border-slate-800 h-10"
+                        />
+                      </div>
+                    )}
 
-                <div className="flex gap-2 pt-2">
-                  <Button 
-                    variant="outline"
-                    onClick={() => testConnection(tempLlamacppUrl, '/health')}
-                    disabled={isTesting}
-                    className="flex-1 border-slate-800 text-xs h-10"
-                  >
-                    Test Connection
-                  </Button>
-                  <Button 
-                    onClick={handleSaveLlamacpp}
-                    disabled={isSaving || !tempLlamacppUrl}
-                    className="flex-1 bg-[#007acc] hover:bg-[#0062a3] text-[#ffffff] font-bold text-xs h-10"
-                  >
-                    Apply Config
-                  </Button>
-                </div>
-                <p className="text-[10px] text-slate-500 leading-relaxed italic">
-                  llama.cpp server should be running with the <code className="bg-slate-950 px-1">--api</code> flag enabled.
-                </p>
-              </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                        <Server className="w-3 h-3" />
+                        Local Model Name
+                      </Label>
+                      <Input
+                        placeholder="qwen2.5-coder"
+                        value={tempOllamaModel}
+                        onChange={(e) => setTempOllamaModel(e.target.value)}
+                        className="bg-slate-950 border-slate-800 h-10"
+                      />
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <Button 
+                        variant="outline"
+                        onClick={() => testConnection(activeOllamaUrl, '/api/tags')}
+                        disabled={isTesting}
+                        className="flex-1 border-slate-800 text-xs h-10"
+                      >
+                        Test Connection
+                      </Button>
+                      <Button 
+                        onClick={handleSaveOllama}
+                        disabled={isSaving || !tempOllamaModel}
+                        className="flex-1 bg-[#007acc] hover:bg-[#0062a3] text-[#ffffff] font-bold text-xs h-10"
+                      >
+                        Apply Config
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {activeGroup === 'local' && provider === 'llamacpp' && (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                        <Globe className="w-3 h-3" />
+                        llama.cpp Server URL
+                      </Label>
+                      <Input
+                        placeholder="http://127.0.0.1:8080"
+                        value={tempLlamacppUrl}
+                        onChange={(e) => setTempLlamacppUrl(e.target.value)}
+                        className="bg-slate-950 border-slate-800 h-10"
+                      />
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <Button 
+                        variant="outline"
+                        onClick={() => testConnection(tempLlamacppUrl, '/health')}
+                        disabled={isTesting}
+                        className="flex-1 border-slate-800 text-xs h-10"
+                      >
+                        Test Connection
+                      </Button>
+                      <Button 
+                        onClick={handleSaveLlamacpp}
+                        disabled={isSaving || !tempLlamacppUrl}
+                        className="flex-1 bg-[#007acc] hover:bg-[#0062a3] text-[#ffffff] font-bold text-xs h-10"
+                      >
+                        Apply Config
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

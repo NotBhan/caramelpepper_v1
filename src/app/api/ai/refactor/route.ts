@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
@@ -10,10 +11,23 @@ const CONFIG_PATH = path.join(process.cwd(), 'config.json');
 /**
  * AI Refactoring Router.
  * Handles switching between cloud Genkit providers and local local inference engines.
+ * strictly gates Cloud AI providers behind GitHub authentication.
  */
 export async function POST(req: NextRequest) {
   try {
-    const { code, language, provider, style } = await req.json();
+    const { code, language, provider, style, isAnonymous } = await req.json();
+
+    // 1. Strict Provider-Level Authorization
+    const isCloud = ['openai', 'anthropic', 'gemini'].includes(provider) || !['ollama', 'llamacpp'].includes(provider);
+    
+    // Check if the user is anonymous attempting to use a cloud provider
+    // In a production environment, we would verify the Firebase ID Token here.
+    if (isCloud && isAnonymous) {
+      return NextResponse.json(
+        { error: 'Cloud providers require a registered GitHub account.' }, 
+        { status: 403 }
+      );
+    }
 
     if (provider === 'ollama') {
       return handleOllamaRefactor(code, language, style);

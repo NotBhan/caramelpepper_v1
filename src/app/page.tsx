@@ -1,3 +1,4 @@
+
 "use client"
 
 import React from "react"
@@ -31,7 +32,6 @@ export default function Dashboard() {
     let detectedStyle = null;
 
     try {
-      // 1. Backend isolated Style Analysis (Non-blocking)
       const styleResponse = await fetch('/api/ai/analyze-style', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -41,15 +41,12 @@ export default function Dashboard() {
       if (styleResponse.ok) {
         detectedStyle = await styleResponse.json();
         setStyleReport(detectedStyle);
-      } else {
-        console.warn('Style analysis engine skipped or failed. Proceeding with standard refactoring.');
       }
     } catch (err) {
       console.warn('Style detective connection failed:', err);
     }
 
     try {
-      // 2. Backend isolated Refactoring
       const refactorResponse = await fetch('/api/ai/refactor', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -57,7 +54,8 @@ export default function Dashboard() {
           code: store.code,
           language: getLanguageFromPath(store.activeFilePath),
           provider: store.inferenceProvider,
-          style: detectedStyle
+          style: detectedStyle,
+          isAnonymous: store.user?.isAnonymous || false
         })
       });
 
@@ -80,7 +78,7 @@ export default function Dashboard() {
     } catch (err: any) {
       toast({
         title: "Optimization Failed",
-        description: err.message || "Refactoring engine failed. Check your local AI connection.",
+        description: err.message || "Refactoring engine failed.",
         variant: "destructive",
       })
     } finally {

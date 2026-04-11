@@ -72,7 +72,6 @@ function useAppStoreLogic(initialCode: string = "") {
     }
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        // Automatically sign in anonymously if no user is present
         try {
           await signInAnonymously(auth);
         } catch (error) {
@@ -87,12 +86,8 @@ function useAppStoreLogic(initialCode: string = "") {
   }, []);
 
   const login = useCallback(async () => {
-    if (!auth) {
-      console.error("Firebase Auth not initialized. Check your .env file.");
-      return;
-    }
+    if (!auth) return;
     try {
-      // signInWithPopup can be used to link an existing anonymous account or sign in fresh
       await signInWithPopup(auth, githubProvider);
     } catch (error) {
       console.error("Login failed", error);
@@ -103,7 +98,6 @@ function useAppStoreLogic(initialCode: string = "") {
     if (!auth) return;
     try {
       await firebaseSignOut(auth);
-      // After signing out, the listener will trigger an anonymous sign-in again
     } catch (error) {
       console.error("Logout failed", error);
     }
@@ -114,12 +108,10 @@ function useAppStoreLogic(initialCode: string = "") {
     try {
       const url = path ? `/api/workspace/tree?path=${encodeURIComponent(path)}` : '/api/workspace/tree';
       const response = await fetch(url);
-      
       if (!response.ok) {
         setState(prev => ({ ...prev, isFetchingTree: false }));
         throw new Error("Failed to load workspace tree");
       }
-
       const data = await response.json();
       setState(prev => ({ ...prev, fileTree: data, isFetchingTree: false }));
     } catch (err) {
@@ -135,7 +127,6 @@ function useAppStoreLogic(initialCode: string = "") {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path })
       });
-
       if (response.ok) {
         await fetchWorkspaceTree(path);
         setState(prev => ({ ...prev, workspaceRoot: path, isPickerDismissed: true }));
@@ -154,7 +145,6 @@ function useAppStoreLogic(initialCode: string = "") {
       }
       const handle = await (window as any).showDirectoryPicker();
       const tree = await readDirectoryRecursive(handle);
-      
       setState(prev => ({
         ...prev,
         fileTree: tree,
@@ -187,7 +177,6 @@ function useAppStoreLogic(initialCode: string = "") {
         if (!response.ok) return;
         content = await response.text();
       }
-      
       setState(prev => ({
         ...prev,
         code: content,
@@ -271,8 +260,13 @@ function useAppStoreLogic(initialCode: string = "") {
   }, [state.code, state.workspaceRoot, fetchWorkspaceTree]);
 
   const setInferenceProvider = useCallback((provider: InferenceProvider) => {
+    // Strictly gate Cloud providers behind GitHub authentication
+    const isCloud = ['openai', 'anthropic', 'gemini'].includes(provider);
+    if (isCloud && state.user?.isAnonymous) {
+      return;
+    }
     setState(prev => ({ ...prev, inferenceProvider: provider }));
-  }, []);
+  }, [state.user]);
 
   const saveApiKey = useCallback(async (provider: string, key: string) => {
     try {
@@ -281,7 +275,6 @@ function useAppStoreLogic(initialCode: string = "") {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider, key })
       });
-
       if (response.ok) {
         setState(prev => ({
           ...prev,
@@ -302,7 +295,6 @@ function useAppStoreLogic(initialCode: string = "") {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ollamaUrl: url, ollamaModel: model })
       });
-
       if (response.ok) {
         setState(prev => ({
           ...prev,
@@ -323,7 +315,6 @@ function useAppStoreLogic(initialCode: string = "") {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ llamacppUrl: url })
       });
-
       if (response.ok) {
         setState(prev => ({
           ...prev,
