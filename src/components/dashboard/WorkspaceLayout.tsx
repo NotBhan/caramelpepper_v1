@@ -42,11 +42,11 @@ export function WorkspaceLayout({
 
   if (activeView !== 'editor') {
     return (
-      <div className="h-full w-full flex bg-[#1e1e1e]">
+      <div className="h-full w-full flex bg-[#1e1e1e] overflow-hidden">
         <div className="w-auto h-full shrink-0 border-r border-[#3c3c3c]">
           {sidebar}
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 h-full overflow-hidden">
           {activeView === 'dashboard' && <DashboardView />}
           {activeView === 'style_detective' && <StyleDetectiveView />}
           {activeView === 'vault' && <VaultView />}

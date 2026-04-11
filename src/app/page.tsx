@@ -1,4 +1,3 @@
-
 "use client"
 
 import React from "react"
@@ -89,7 +88,7 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       <MenuBar />
-      <div className="flex-1">
+      <div className="flex-1 min-h-0">
         <WorkspaceLayout
           activeView={store.activeView}
           isDiffOpen={store.isDiffOpen}
