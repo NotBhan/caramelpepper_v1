@@ -9,7 +9,8 @@ import {
   Keyboard,
   ShieldCheck,
   Code,
-  FileOutput
+  FileOutput,
+  Brain
 } from "lucide-react"
 import {
   Menubar,
@@ -40,8 +41,8 @@ export function MenuBar() {
   return (
     <div className="h-8 w-full bg-[#333333] border-b border-[#3c3c3c] flex items-center px-2 z-50">
       <div className="flex items-center gap-2 mr-4 px-2">
-        <ShieldCheck className="w-4 h-4 text-[#007acc]" />
-        <span className="text-[11px] font-bold text-[#ffffff] uppercase tracking-tight">CaramelPepper</span>
+        <Brain className="w-4 h-4 text-[#007acc]" />
+        <span className="text-[11px] font-bold text-[#ffffff] uppercase tracking-tight">Octamind AI</span>
       </div>
 
       <Menubar className="bg-transparent border-none h-full shadow-none">

@@ -3,7 +3,7 @@ import './globals.css';
 import { AppProvider } from '@/store/use-app-store';
 
 export const metadata: Metadata = {
-  title: 'CaramelPepper | Local AI Refactoring',
+  title: 'Octamind AI | Local AI Refactoring',
   description: 'Privacy-preserving code complexity analysis and AI refactoring tool.',
 };
 
