@@ -12,6 +12,7 @@ function createWindow() {
     height: 800,
     title: 'Octamind AI',
     backgroundColor: '#1e1e1e',
+    show: false, // Do not show the window until it is ready to be painted
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -25,12 +26,18 @@ function createWindow() {
   if (isDev) {
     // In dev mode, we load the Next.js dev server on port 9002
     win.loadURL('http://localhost:9002');
-    win.webContents.openDevTools();
   } else {
     // [PRODUCTION PLACEHOLDER]: In a full build, this would load from a custom server
-    // instance running on a background port, or point to a local distribution.
     win.loadURL('http://localhost:9002'); 
   }
+
+  // Optimize perceived boot time by only showing the window when content is ready
+  win.once('ready-to-show', () => {
+    win.show();
+    if (isDev) {
+      win.webContents.openDevTools();
+    }
+  });
 
   win.on('page-title-updated', (e) => e.preventDefault());
 }
