@@ -5,7 +5,14 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { type ComplexityMetrics, calculateComplexity } from "@/lib/complexity"
 import { readDirectoryRecursive } from "@/lib/browser-fs"
 import { auth, githubProvider } from "@/lib/firebase"
-import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut, signInAnonymously, User } from "firebase/auth"
+import { 
+  onAuthStateChanged, 
+  signInWithPopup, 
+  signOut as firebaseSignOut, 
+  signInAnonymously, 
+  linkWithPopup,
+  User 
+} from "firebase/auth"
 
 export type InferenceProvider = 'local' | 'anthropic' | 'openai' | 'gemini' | 'ollama' | 'llamacpp';
 export type AppView = 'dashboard' | 'editor' | 'style_detective' | 'vault' | 'history';
@@ -67,6 +74,7 @@ function useAppStoreLogic(initialCode: string = "") {
 
   useEffect(() => {
     if (!auth) {
+      console.warn("[AUTH]: Firebase Auth not initialized. Check NEXT_PUBLIC_FIREBASE_API_KEY.");
       setState(prev => ({ ...prev, loadingAuth: false }));
       return;
     }
@@ -75,7 +83,7 @@ function useAppStoreLogic(initialCode: string = "") {
         try {
           await signInAnonymously(auth);
         } catch (error) {
-          console.error("Anonymous sign-in failed", error);
+          console.error("[AUTH]: Anonymous sign-in failed", error);
           setState(prev => ({ ...prev, loadingAuth: false }));
         }
       } else {
@@ -86,11 +94,29 @@ function useAppStoreLogic(initialCode: string = "") {
   }, []);
 
   const login = useCallback(async () => {
-    if (!auth) return;
+    if (!auth) {
+      alert("Authentication system not configured. Please add your Firebase API keys to .env");
+      return;
+    }
+    
     try {
-      await signInWithPopup(auth, githubProvider);
-    } catch (error) {
-      console.error("Login failed", error);
+      // If user is already anonymous, we should LINK their account so they don't lose data
+      if (auth.currentUser?.isAnonymous) {
+        await linkWithPopup(auth.currentUser, githubProvider);
+      } else {
+        await signInWithPopup(auth, githubProvider);
+      }
+    } catch (error: any) {
+      console.error("[AUTH]: Login or Linking failed", error);
+      
+      // Fallback: If linking failed (e.g. account already exists), try a fresh sign in
+      if (error.code === 'auth/credential-already-in-use' || error.code === 'auth/email-already-in-use') {
+        try {
+          await signInWithPopup(auth, githubProvider);
+        } catch (innerError) {
+          console.error("[AUTH]: Fallback sign-in failed", innerError);
+        }
+      }
     }
   }, []);
 
@@ -99,7 +125,7 @@ function useAppStoreLogic(initialCode: string = "") {
     try {
       await firebaseSignOut(auth);
     } catch (error) {
-      console.error("Logout failed", error);
+      console.error("[AUTH]: Logout failed", error);
     }
   }, []);
 
