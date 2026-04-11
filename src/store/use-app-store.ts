@@ -4,7 +4,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react"
 import { type ComplexityMetrics, calculateComplexity } from "@/lib/complexity"
 import { readDirectoryRecursive } from "@/lib/browser-fs"
-import { auth, githubProvider } from "@/lib/firebase"
+import { auth, githubProvider, isConfigured } from "@/lib/firebase"
 import { 
   onAuthStateChanged, 
   signInWithPopup, 
@@ -73,48 +73,50 @@ function useAppStoreLogic(initialCode: string = "") {
   });
 
   useEffect(() => {
-    if (!auth) {
-      console.warn("[AUTH]: Firebase Auth not initialized. Check NEXT_PUBLIC_FIREBASE_API_KEY.");
+    if (!auth || !isConfigured) {
       setState(prev => ({ ...prev, loadingAuth: false }));
       return;
     }
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         try {
           await signInAnonymously(auth);
-        } catch (error) {
-          console.error("[AUTH]: Anonymous sign-in failed", error);
+        } catch (error: any) {
+          // If anonymous sign-in is disabled in console, we still want to let them use the app
+          console.warn("[AUTH]: Anonymous sign-in failed. Ensure it is enabled in Firebase Console.", error.message);
           setState(prev => ({ ...prev, loadingAuth: false }));
         }
       } else {
         setState(prev => ({ ...prev, user, loadingAuth: false }));
       }
     });
+
     return () => unsubscribe();
   }, []);
 
   const login = useCallback(async () => {
-    if (!auth) {
-      alert("Authentication system not configured. Please add your Firebase API keys to .env");
+    if (!auth || !isConfigured) {
+      alert("Firebase is not configured. Please add your API keys to the .env file.");
       return;
     }
     
     try {
-      // If user is already anonymous, we should LINK their account so they don't lose data
       if (auth.currentUser?.isAnonymous) {
+        // Migration: Link the anonymous session to the GitHub account
         await linkWithPopup(auth.currentUser, githubProvider);
       } else {
         await signInWithPopup(auth, githubProvider);
       }
     } catch (error: any) {
-      console.error("[AUTH]: Login or Linking failed", error);
+      console.error("[AUTH]: Login/Link failed", error);
       
-      // Fallback: If linking failed (e.g. account already exists), try a fresh sign in
+      // Fallback: If linking failed because account exists, perform normal sign in
       if (error.code === 'auth/credential-already-in-use' || error.code === 'auth/email-already-in-use') {
         try {
           await signInWithPopup(auth, githubProvider);
         } catch (innerError) {
-          console.error("[AUTH]: Fallback sign-in failed", innerError);
+          console.error("[AUTH]: Fallback login failed", innerError);
         }
       }
     }
@@ -124,6 +126,7 @@ function useAppStoreLogic(initialCode: string = "") {
     if (!auth) return;
     try {
       await firebaseSignOut(auth);
+      // After sign out, the useEffect will trigger and re-create an anonymous session if possible
     } catch (error) {
       console.error("[AUTH]: Logout failed", error);
     }
@@ -286,7 +289,6 @@ function useAppStoreLogic(initialCode: string = "") {
   }, [state.code, state.workspaceRoot, fetchWorkspaceTree]);
 
   const setInferenceProvider = useCallback((provider: InferenceProvider) => {
-    // Strictly gate Cloud providers behind GitHub authentication
     const isCloud = ['openai', 'anthropic', 'gemini'].includes(provider);
     if (isCloud && state.user?.isAnonymous) {
       return;

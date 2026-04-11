@@ -12,13 +12,23 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Only initialize if we have an API Key to avoid "invalid-api-key" errors during build/SSR
+// Check if keys are valid and not placeholders
+const isConfigured = 
+  firebaseConfig.apiKey && 
+  firebaseConfig.apiKey !== 'your_api_key' &&
+  !firebaseConfig.apiKey.startsWith('your_');
+
+// Only initialize if we have a valid API Key
 const app = (getApps().length > 0) 
   ? getApp() 
-  : (firebaseConfig.apiKey ? initializeApp(firebaseConfig) : null);
+  : (isConfigured ? initializeApp(firebaseConfig) : null);
 
-const auth = app ? getAuth(app) : null as any;
-const db = app ? getFirestore(app) : null as any;
+const auth = app ? getAuth(app) : null;
+const db = app ? getFirestore(app) : null;
 const githubProvider = new GithubAuthProvider();
 
-export { auth, db, githubProvider, app };
+if (!isConfigured && typeof window !== 'undefined') {
+  console.warn("[AUTH]: Firebase is not configured. Please add valid NEXT_PUBLIC_FIREBASE_* keys to your .env file to enable Cloud features.");
+}
+
+export { auth, db, githubProvider, app, isConfigured };
