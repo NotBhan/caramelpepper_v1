@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast"
 import { SettingsModal } from "@/components/dashboard/SettingsModal"
 import { MenuBar } from "@/components/dashboard/MenuBar"
 import { WorkspacePickerModal } from "@/components/dashboard/WorkspacePickerModal"
+import { CookieConsent } from "@/components/dashboard/CookieConsent"
 import { getLanguageFromPath } from "@/lib/language-mapper"
 
 export default function Dashboard() {
@@ -164,6 +165,7 @@ export default function Dashboard() {
         onSaveOllama={store.saveOllamaConfig}
       />
       
+      <CookieConsent />
       <Toaster />
     </div>
   )
