@@ -29,25 +29,16 @@ export function WorkspaceLayout({
   isDiffOpen = false,
   activeView
 }: WorkspaceLayoutProps) {
-  const LAYOUT_KEY = "octamind-ai-layout-v1"
   const [isMounted, setIsMounted] = React.useState(false)
 
   React.useEffect(() => {
     setIsMounted(true)
   }, [])
 
-  const onLayout = (sizes: number[]) => {
-    if (isMounted) {
-      localStorage.setItem(LAYOUT_KEY, JSON.stringify(sizes))
-    }
-  }
-
-  // Prevent hydration mismatch by rendering a skeleton or empty state initially
   if (!isMounted) {
     return <div className="h-full w-full bg-[#1e1e1e]" />
   }
 
-  // Handle non-editor views with a stable, non-resizable container
   if (activeView !== 'editor') {
     return (
       <div className="h-full w-full flex bg-[#1e1e1e]">
@@ -67,14 +58,13 @@ export function WorkspaceLayout({
   return (
     <div className="h-full w-full overflow-hidden bg-[#1e1e1e] text-[#cccccc] flex flex-col">
       <PanelGroup 
-        id="main-horizontal-group"
+        id="root-layout-group"
         direction="horizontal" 
-        onLayout={onLayout}
-        autoSaveId="octamind-main-layout"
+        autoSaveId="octamind-root-layout"
       >
-        {/* Project Explorer / Sidebar */}
         <Panel
           id="sidebar-panel"
+          order={1}
           defaultSize={15}
           minSize={10}
           maxSize={25}
@@ -85,24 +75,21 @@ export function WorkspaceLayout({
 
         <ResizeHandle direction="vertical" id="sidebar-resizer" />
 
-        {/* Main Workspace Area */}
-        <Panel id="workspace-panel" defaultSize={65}>
-          <PanelGroup id="main-vertical-group" direction="vertical">
-            <Panel id="top-editor-panel" defaultSize={80} minSize={20}>
-              <PanelGroup id="editor-diff-group" direction="horizontal">
-                {/* Primary Code Editor */}
-                <Panel id="primary-editor" defaultSize={isDiffOpen ? 40 : 100} minSize={10}>
-                  <div className="h-full transition-all duration-300 ease-in-out">
+        <Panel id="main-content-panel" order={2} defaultSize={65}>
+          <PanelGroup id="workspace-vertical-group" direction="vertical" autoSaveId="octamind-vertical-layout">
+            <Panel id="editor-section-panel" order={1} defaultSize={80} minSize={20}>
+              <PanelGroup id="editor-diff-group" direction="horizontal" autoSaveId="octamind-editor-diff-layout">
+                <Panel id="primary-editor-panel" order={1} defaultSize={isDiffOpen ? 40 : 100} minSize={10}>
+                  <div className="h-full">
                     {editor}
                   </div>
                 </Panel>
                 
                 {isDiffOpen && <ResizeHandle direction="vertical" id="diff-resizer" />}
 
-                {/* AI Refactor Preview / Diff */}
                 {isDiffOpen && (
-                  <Panel id="diff-preview-panel" defaultSize={60} minSize={10}>
-                    <div className="h-full animate-in slide-in-from-right duration-300">
+                  <Panel id="diff-viewer-panel" order={2} defaultSize={60} minSize={10}>
+                    <div className="h-full">
                       {refactor}
                     </div>
                   </Panel>
@@ -112,18 +99,19 @@ export function WorkspaceLayout({
 
             <ResizeHandle direction="horizontal" id="bottom-panel-resizer" />
 
-            {/* Terminal / Health / Logs */}
-            <Panel id="bottom-console-panel" defaultSize={20} minSize={0} collapsible>
-              {bottom}
+            <Panel id="bottom-console-panel" order={2} defaultSize={20} minSize={0} collapsible>
+              <div className="h-full w-full overflow-hidden">
+                {bottom}
+              </div>
             </Panel>
           </PanelGroup>
         </Panel>
 
-        <ResizeHandle direction="vertical" id="analysis-panel-resizer" />
+        <ResizeHandle direction="vertical" id="right-panel-resizer" />
 
-        {/* Right Analysis Panel */}
         <Panel
           id="right-analysis-panel"
+          order={3}
           defaultSize={20}
           minSize={15}
           maxSize={30}
