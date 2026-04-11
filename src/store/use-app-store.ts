@@ -72,6 +72,7 @@ function useAppStoreLogic(initialCode: string = "") {
   });
 
   useEffect(() => {
+    // If not configured, immediately stop loading state to allow local-only mode
     if (!auth || !isConfigured) {
       setState(prev => ({ ...prev, loadingAuth: false }));
       return;
@@ -80,10 +81,9 @@ function useAppStoreLogic(initialCode: string = "") {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         try {
-          // Attempt frictionless guest entry
           await signInAnonymously(auth);
         } catch (error: any) {
-          console.warn("[AUTH]: Anonymous entry skipped or failed. Guest mode disabled.", error.message);
+          console.warn("[AUTH]: Anonymous entry failed. Check if Anonymous Auth is enabled in your Firebase Console.", error.message);
           setState(prev => ({ ...prev, loadingAuth: false }));
         }
       } else {
@@ -96,17 +96,15 @@ function useAppStoreLogic(initialCode: string = "") {
 
   const login = useCallback(async () => {
     if (!auth || !isConfigured) {
-      console.warn("[AUTH]: Firebase credentials missing. Check your .env file.");
+      alert("Cloud features are not configured. Please set up your .env file with valid Firebase credentials.");
       return;
     }
     
     try {
       if (auth.currentUser?.isAnonymous) {
-        // Migration: Link the anonymous session to the GitHub account
         try {
           await linkWithPopup(auth.currentUser, githubProvider);
         } catch (linkError: any) {
-          // If the account already exists, simply sign in
           if (linkError.code === 'auth/credential-already-in-use') {
             await signInWithPopup(auth, githubProvider);
           } else {
@@ -117,11 +115,13 @@ function useAppStoreLogic(initialCode: string = "") {
         await signInWithPopup(auth, githubProvider);
       }
     } catch (error: any) {
-      console.error("[AUTH]: Authentication failed. Check your Firebase Authorized Domains.", error.message);
-      if (error.code === 'auth/popup-closed-by-user') {
-        // Silent fail for user cancellation
-      } else if (error.code === 'auth/auth-domain-config-required') {
-        alert("Authentication configuration error: Auth Domain is missing or incorrect.");
+      console.error("[AUTH]: Login failed.", error.message);
+      
+      // Provide actionable feedback for the specific API Key error
+      if (error.code === 'auth/api-key-not-valid') {
+        alert("The Firebase API Key provided is invalid. Please double-check your .env.local file.");
+      } else if (error.code !== 'auth/popup-closed-by-user') {
+        alert(`Authentication error: ${error.message}`);
       }
     }
   }, []);
@@ -293,7 +293,7 @@ function useAppStoreLogic(initialCode: string = "") {
 
   const setInferenceProvider = useCallback((provider: InferenceProvider) => {
     const isCloud = ['openai', 'anthropic', 'gemini'].includes(provider);
-    if (isCloud && state.user?.isAnonymous) {
+    if (isCloud && (!state.user || state.user.isAnonymous)) {
       return;
     }
     setState(prev => ({ ...prev, inferenceProvider: provider }));
