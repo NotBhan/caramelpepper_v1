@@ -3,8 +3,16 @@
 import React from "react"
 import { Cookie, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog"
 
-export function CookieConsent() {
+interface CookieConsentProps {
+  onConsent: () => void;
+}
+
+export function CookieConsent({ onConsent }: CookieConsentProps) {
   const [isVisible, setIsVisible] = React.useState(false)
 
   React.useEffect(() => {
@@ -17,22 +25,22 @@ export function CookieConsent() {
   const handleAccept = () => {
     localStorage.setItem("octamind-cookie-consent", "true")
     setIsVisible(false)
+    onConsent()
   }
 
   const handleDecline = () => {
     localStorage.setItem("octamind-cookie-consent", "declined")
     setIsVisible(false)
+    onConsent()
   }
 
-  if (!isVisible) return null
-
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-md" />
-      
-      {/* Modal Content */}
-      <div className="relative w-full max-w-md bg-[#252526] border border-[#3c3c3c] rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+    <Dialog open={isVisible} onOpenChange={() => {}}>
+      <DialogContent 
+        className="sm:max-w-md bg-[#252526] border-[#3c3c3c] p-0 overflow-hidden [&>button]:hidden shadow-2xl"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         <div className="p-8 space-y-6">
           <div className="flex flex-col items-center text-center space-y-4">
             <div className="w-16 h-16 rounded-full bg-[#007acc]/10 flex items-center justify-center border border-[#007acc]/20">
@@ -68,7 +76,7 @@ export function CookieConsent() {
             <span className="text-[10px] text-[#858585] uppercase tracking-widest font-bold">Privacy First Architecture</span>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

@@ -22,7 +22,13 @@ export default function Dashboard() {
   const [refactorOutput, setRefactorOutput] = React.useState<any>(null)
   const [isBusy, setIsBusy] = React.useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false)
+  const [hasConsented, setHasConsented] = React.useState<boolean | null>(null)
   const { toast } = useToast()
+
+  React.useEffect(() => {
+    const consent = localStorage.getItem("octamind-cookie-consent")
+    setHasConsented(!!consent)
+  }, [])
 
   const handleAnalyze = async () => {
     if (!store.code) return;
@@ -89,7 +95,8 @@ export default function Dashboard() {
   // Determine if the workspace picker should be shown automatically
   const isGitHubAuthenticated = store.user && !store.user.isAnonymous;
   const isWorkspaceActive = store.workspaceRoot !== null;
-  const showPicker = !store.loadingAuth && 
+  const showPicker = hasConsented === true && 
+                     !store.loadingAuth && 
                      !store.isPickerDismissed && 
                      !isWorkspaceActive && 
                      !isGitHubAuthenticated;
@@ -173,7 +180,7 @@ export default function Dashboard() {
         onSaveOllama={store.saveOllamaConfig}
       />
       
-      <CookieConsent />
+      <CookieConsent onConsent={() => setHasConsented(true)} />
       <Toaster />
     </div>
   )
