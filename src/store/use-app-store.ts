@@ -14,7 +14,7 @@ import {
 } from "firebase/auth"
 
 export type InferenceProvider = 'local' | 'anthropic' | 'openai' | 'gemini' | 'ollama' | 'llamacpp';
-export type AppView = 'dashboard' | 'editor' | 'style_detective' | 'vault' | 'history';
+export type AppView = 'dashboard' | 'editor' | 'style_detective' | 'vault' | 'history' | 'shortcuts' | 'api_reference';
 
 export type FileItem = {
   name: string;
@@ -72,7 +72,6 @@ function useAppStoreLogic(initialCode: string = "") {
   });
 
   useEffect(() => {
-    // If not configured, immediately stop loading state to allow local-only mode
     if (!auth || !isConfigured) {
       setState(prev => ({ ...prev, loadingAuth: false }));
       return;

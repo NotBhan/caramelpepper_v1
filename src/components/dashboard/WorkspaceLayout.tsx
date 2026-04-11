@@ -1,4 +1,3 @@
-
 "use client"
 
 import React from "react"
@@ -9,6 +8,8 @@ import { DashboardView } from "./DashboardView"
 import { StyleDetectiveView } from "./StyleDetectiveView"
 import { VaultView } from "./VaultView"
 import { HistoryView } from "./HistoryView"
+import { ShortcutsView } from "./ShortcutsView"
+import { ApiReferenceView } from "./ApiReferenceView"
 
 interface WorkspaceLayoutProps {
   sidebar: React.ReactNode;
@@ -50,6 +51,8 @@ export function WorkspaceLayout({
           {activeView === 'style_detective' && <StyleDetectiveView />}
           {activeView === 'vault' && <VaultView />}
           {activeView === 'history' && <HistoryView />}
+          {activeView === 'shortcuts' && <ShortcutsView />}
+          {activeView === 'api_reference' && <ApiReferenceView />}
         </div>
       </div>
     );

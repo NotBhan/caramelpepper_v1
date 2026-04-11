@@ -104,11 +104,11 @@ export function MenuBar() {
             Help
           </MenubarTrigger>
           <MenubarContent className="bg-[#252526] border-[#3c3c3c] text-[#cccccc]">
-            <MenubarItem className="flex items-center gap-2 text-xs focus:bg-[#007acc] focus:text-[#ffffff]">
+            <MenubarItem onClick={() => store.setActiveView('shortcuts')} className="flex items-center gap-2 text-xs focus:bg-[#007acc] focus:text-[#ffffff]">
               <Keyboard className="w-3.5 h-3.5" />
               Keyboard Shortcuts
             </MenubarItem>
-            <MenubarItem className="flex items-center gap-2 text-xs focus:bg-[#007acc] focus:text-[#ffffff]">
+            <MenubarItem onClick={() => store.setActiveView('api_reference')} className="flex items-center gap-2 text-xs focus:bg-[#007acc] focus:text-[#ffffff]">
               <Code className="w-3.5 h-3.5" />
               API Reference
             </MenubarItem>
