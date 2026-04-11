@@ -1,4 +1,3 @@
-
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GithubAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
@@ -12,23 +11,29 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Check if keys are valid and not placeholders
+// Validation: Check if keys are present and aren't default placeholders
 const isConfigured = 
-  firebaseConfig.apiKey && 
+  !!firebaseConfig.apiKey && 
   firebaseConfig.apiKey !== 'your_api_key' &&
   !firebaseConfig.apiKey.startsWith('your_');
 
-// Only initialize if we have a valid API Key
-const app = (getApps().length > 0) 
-  ? getApp() 
-  : (isConfigured ? initializeApp(firebaseConfig) : null);
+// Only initialize if we have a valid configuration to avoid SDK-level crashes
+let app = null;
+let auth = null;
+let db = null;
 
-const auth = app ? getAuth(app) : null;
-const db = app ? getFirestore(app) : null;
-const githubProvider = new GithubAuthProvider();
-
-if (!isConfigured && typeof window !== 'undefined') {
-  console.warn("[AUTH]: Firebase is not configured. Please add valid NEXT_PUBLIC_FIREBASE_* keys to your .env file to enable Cloud features.");
+if (isConfigured) {
+  try {
+    app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+  } catch (error) {
+    console.error("[FIREBASE]: Initialization failed. Check your config object.", error);
+  }
+} else if (typeof window !== 'undefined') {
+  console.warn("[AUTH]: Firebase is NOT configured. Cloud features (Auth/Firestore) will be disabled. Set your NEXT_PUBLIC_FIREBASE_* env vars.");
 }
+
+const githubProvider = new GithubAuthProvider();
 
 export { auth, db, githubProvider, app, isConfigured };

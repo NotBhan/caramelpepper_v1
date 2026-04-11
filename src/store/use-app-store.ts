@@ -1,4 +1,3 @@
-
 "use client"
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react"
@@ -81,10 +80,10 @@ function useAppStoreLogic(initialCode: string = "") {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         try {
+          // Attempt frictionless guest entry
           await signInAnonymously(auth);
         } catch (error: any) {
-          // If anonymous sign-in is disabled in console, we still want to let them use the app
-          console.warn("[AUTH]: Anonymous sign-in failed. Ensure it is enabled in Firebase Console.", error.message);
+          console.warn("[AUTH]: Anonymous entry skipped or failed. Guest mode disabled.", error.message);
           setState(prev => ({ ...prev, loadingAuth: false }));
         }
       } else {
@@ -97,27 +96,32 @@ function useAppStoreLogic(initialCode: string = "") {
 
   const login = useCallback(async () => {
     if (!auth || !isConfigured) {
-      alert("Firebase is not configured. Please add your API keys to the .env file.");
+      console.warn("[AUTH]: Firebase credentials missing. Check your .env file.");
       return;
     }
     
     try {
       if (auth.currentUser?.isAnonymous) {
         // Migration: Link the anonymous session to the GitHub account
-        await linkWithPopup(auth.currentUser, githubProvider);
+        try {
+          await linkWithPopup(auth.currentUser, githubProvider);
+        } catch (linkError: any) {
+          // If the account already exists, simply sign in
+          if (linkError.code === 'auth/credential-already-in-use') {
+            await signInWithPopup(auth, githubProvider);
+          } else {
+            throw linkError;
+          }
+        }
       } else {
         await signInWithPopup(auth, githubProvider);
       }
     } catch (error: any) {
-      console.error("[AUTH]: Login/Link failed", error);
-      
-      // Fallback: If linking failed because account exists, perform normal sign in
-      if (error.code === 'auth/credential-already-in-use' || error.code === 'auth/email-already-in-use') {
-        try {
-          await signInWithPopup(auth, githubProvider);
-        } catch (innerError) {
-          console.error("[AUTH]: Fallback login failed", innerError);
-        }
+      console.error("[AUTH]: Authentication failed. Check your Firebase Authorized Domains.", error.message);
+      if (error.code === 'auth/popup-closed-by-user') {
+        // Silent fail for user cancellation
+      } else if (error.code === 'auth/auth-domain-config-required') {
+        alert("Authentication configuration error: Auth Domain is missing or incorrect.");
       }
     }
   }, []);
@@ -126,7 +130,6 @@ function useAppStoreLogic(initialCode: string = "") {
     if (!auth) return;
     try {
       await firebaseSignOut(auth);
-      // After sign out, the useEffect will trigger and re-create an anonymous session if possible
     } catch (error) {
       console.error("[AUTH]: Logout failed", error);
     }
