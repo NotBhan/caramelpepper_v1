@@ -75,7 +75,6 @@ function useAppStoreLogic(initialCode: string = "") {
 
   useEffect(() => {
     if (!auth || !isConfigured) {
-      // Immediately resolve loading state if cloud features are disabled
       setState(prev => ({ ...prev, loadingAuth: false }));
       return;
     }
@@ -105,9 +104,15 @@ function useAppStoreLogic(initialCode: string = "") {
     try {
       if (auth.currentUser?.isAnonymous) {
         try {
+          // Attempt to link the anonymous session to GitHub
           await linkWithPopup(auth.currentUser, githubProvider);
         } catch (linkError: any) {
+          // If linking fails due to credentials already existing, fallback to direct sign-in
           if (linkError.code === 'auth/credential-already-in-use') {
+            await signInWithPopup(auth, githubProvider);
+          } else if (linkError.message?.includes('Symbol.iterator') || linkError.message?.includes('authorizedDomains')) {
+            // Handle the specific SDK iterator crash by falling back to sign-in
+            console.warn("[AUTH]: linkWithPopup iterator error detected, falling back to signInWithPopup.");
             await signInWithPopup(auth, githubProvider);
           } else {
             throw linkError;
@@ -122,7 +127,9 @@ function useAppStoreLogic(initialCode: string = "") {
       if (error.code === 'auth/api-key-not-valid') {
         alert("Octamind AI: The Firebase API Key in your .env file is invalid.");
       } else if (error.code === 'auth/auth-domain-config-required') {
-        alert("Octamind AI: Auth Domain is missing. Ensure NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN is set.");
+        alert("Octamind AI: Auth Domain is missing or incorrect. Check NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN.");
+      } else if (error.message?.includes('Symbol.iterator')) {
+        alert("Octamind AI: Authentication encountered an internal SDK error. This usually means the Firebase Auth configuration hasn't finished loading or your domain isn't authorized in the Firebase console.");
       } else if (error.code !== 'auth/popup-closed-by-user') {
         alert(`Authentication error: ${error.message}`);
       }

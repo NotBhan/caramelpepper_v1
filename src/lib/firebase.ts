@@ -12,11 +12,13 @@ const firebaseConfig = {
 };
 
 /**
- * Validates if the Firebase configuration is present and not using placeholder values.
+ * Validates if the Firebase configuration is present and structurally valid.
+ * Ensures that we don't attempt to initialize with "undefined" strings or placeholders.
  */
 const isConfigured = 
   !!firebaseConfig.apiKey && 
   firebaseConfig.apiKey !== 'undefined' &&
+  firebaseConfig.apiKey.length > 10 &&
   !firebaseConfig.apiKey.includes('your_') &&
   !!firebaseConfig.authDomain &&
   firebaseConfig.authDomain !== 'undefined' &&
@@ -35,9 +37,8 @@ if (isConfigured) {
     console.error("[FIREBASE]: Initialization failed. Check your environment variables.", error);
   }
 } else {
-  // Silent fallback for Local-Only mode
   if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-    console.info("[OCTAMIND]: Firebase is not configured. IDE is running in Local-Only mode.");
+    console.info("[OCTAMIND]: Firebase Cloud features are disabled. Running in Local-Only mode.");
   }
 }
 
