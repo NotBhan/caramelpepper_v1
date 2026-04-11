@@ -3,7 +3,7 @@
 import React from "react"
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels"
 import { cn } from "@/lib/utils"
-import { type AppView } from "@/store/use-app-store"
+import { type AppView, useAppStore } from "@/store/use-app-store"
 import { DashboardView } from "./DashboardView"
 import { StyleDetectiveView } from "./StyleDetectiveView"
 import { VaultView } from "./VaultView"
@@ -30,6 +30,7 @@ export function WorkspaceLayout({
   isDiffOpen = false,
   activeView
 }: WorkspaceLayoutProps) {
+  const store = useAppStore()
   const [isMounted, setIsMounted] = React.useState(false)
 
   React.useEffect(() => {
@@ -40,7 +41,9 @@ export function WorkspaceLayout({
     return <div className="h-full w-full bg-[#1e1e1e]" />
   }
 
-  if (activeView !== 'editor') {
+  const isWideView = activeView === 'dashboard' || activeView === 'vault' || activeView === 'history' || activeView === 'shortcuts' || activeView === 'api_reference';
+
+  if (isWideView) {
     return (
       <div className="h-full w-full flex bg-[#1e1e1e] overflow-hidden">
         <div className="w-auto h-full shrink-0 border-r border-[#3c3c3c]">
@@ -68,17 +71,17 @@ export function WorkspaceLayout({
         <Panel
           id="sidebar-panel"
           order={1}
-          defaultSize={15}
-          minSize={10}
-          maxSize={25}
+          defaultSize={store.isSidebarCollapsed ? 3 : 15}
+          minSize={store.isSidebarCollapsed ? 3 : 10}
+          maxSize={store.isSidebarCollapsed ? 3 : 25}
           className="bg-[#252526]"
         >
           {sidebar}
         </Panel>
 
-        <ResizeHandle direction="vertical" id="sidebar-resizer" />
+        {!store.isSidebarCollapsed && <ResizeHandle direction="vertical" id="sidebar-resizer" />}
 
-        <Panel id="main-content-panel" order={2} defaultSize={65}>
+        <Panel id="main-content-panel" order={2} defaultSize={store.isSidebarCollapsed ? 97 : 85}>
           <PanelGroup id="workspace-vertical-group" direction="vertical" autoSaveId="octamind-vertical-layout">
             <Panel id="editor-section-panel" order={1} defaultSize={80} minSize={20}>
               <PanelGroup id="editor-diff-group" direction="horizontal" autoSaveId="octamind-editor-diff-layout">

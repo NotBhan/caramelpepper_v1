@@ -16,7 +16,8 @@ import {
   LogOut,
   Github,
   UserCircle,
-  Brain
+  Brain,
+  ChevronLeft
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { FileExplorer } from "./FileExplorer"
@@ -92,6 +93,15 @@ export function Sidebar({
 
   const isGuest = store.user?.isAnonymous;
 
+  const handleActivityIconClick = (view: AppView) => {
+    if (store.activeView === view) {
+      store.toggleSidebar();
+    } else {
+      setActiveView(view);
+    }
+    store.closeMobileMenu();
+  };
+
   return (
     <div className={cn(
       "h-full flex overflow-hidden fixed inset-y-0 left-0 z-50 transform transition-transform duration-200 ease-in-out md:relative md:translate-x-0 bg-[#252526]",
@@ -103,31 +113,31 @@ export function Sidebar({
           icon={LayoutGrid} 
           label="Dashboard" 
           active={activeView === 'dashboard'} 
-          onClick={() => { setActiveView('dashboard'); store.closeMobileMenu(); }} 
+          onClick={() => handleActivityIconClick('dashboard')} 
         />
         <ActivityIcon 
           icon={FileCode} 
           label="Explorer" 
           active={activeView === 'editor'} 
-          onClick={() => { setActiveView('editor'); store.closeMobileMenu(); }} 
+          onClick={() => handleActivityIconClick('editor')} 
         />
         <ActivityIcon 
           icon={Search} 
           label="Style Detective" 
           active={activeView === 'style_detective'} 
-          onClick={() => { setActiveView('style_detective'); store.closeMobileMenu(); }} 
+          onClick={() => handleActivityIconClick('style_detective')} 
         />
         <ActivityIcon 
           icon={Database} 
           label="Vault" 
           active={activeView === 'vault'} 
-          onClick={() => { setActiveView('vault'); store.closeMobileMenu(); }} 
+          onClick={() => handleActivityIconClick('vault')} 
         />
         <ActivityIcon 
           icon={History} 
           label="Refactor History" 
           active={activeView === 'history'} 
-          onClick={() => { setActiveView('history'); store.closeMobileMenu(); }} 
+          onClick={() => handleActivityIconClick('history')} 
         />
         
         <div className="mt-auto w-full flex flex-col items-center gap-2">
@@ -194,70 +204,80 @@ export function Sidebar({
       </div>
 
       {/* Sidebar Panel */}
-      <aside className={cn(
-        "flex-1 flex flex-col bg-[#252526] transition-all duration-200 overflow-hidden",
-        activeView === 'dashboard' || activeView === 'vault' || activeView === 'history' ? "w-0 opacity-0" : "w-[240px] opacity-100"
-      )}>
-        <div className="p-3 border-b border-[#3c3c3c] flex items-center justify-between">
-          <span className="text-[11px] font-bold text-[#858585] uppercase tracking-wider">
-            {activeView === 'editor' ? 'Explorer' : 'Detective'}
-          </span>
-          {activeView === 'editor' && workspaceRoot && (
-            <button 
-              onClick={onRefreshTree}
-              className="text-[#858585] hover:text-[#ffffff] transition-colors"
-            >
-              <RefreshCw className={cn("w-3.5 h-3.5", isFetchingTree && "animate-spin")} />
-            </button>
-          )}
-        </div>
-
-        <div className="flex-1 overflow-y-auto">
-          {activeView === 'editor' && (
-            <div className="py-2">
-              {workspaceRoot ? (
-                <FileExplorer 
-                  items={fileTree} 
-                  activePath={activeFilePath} 
-                  onFileClick={onOpenFile} 
-                />
-              ) : (
-                <div className="py-8 px-4 text-center space-y-4">
-                  <p className="text-[11px] text-[#858585] leading-relaxed">
-                    No workspace opened. You are in Single File Mode.
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={onOpenWorkspace}
-                    className="h-7 text-[10px] border-[#3c3c3c] text-[#cccccc] hover:bg-[#2a2d2e] w-full flex items-center justify-center gap-2 px-1 overflow-hidden"
-                  >
-                    <FolderOpen className="w-3 h-3 shrink-0" />
-                    <span className="truncate">Open Workspace</span>
-                  </Button>
-                </div>
+      {!store.isSidebarCollapsed && (
+        <aside className={cn(
+          "flex-1 flex flex-col bg-[#252526] transition-all duration-200 overflow-hidden",
+          activeView === 'dashboard' || activeView === 'vault' || activeView === 'history' ? "w-0 opacity-0" : "w-[240px] opacity-100"
+        )}>
+          <div className="p-3 border-b border-[#3c3c3c] flex items-center justify-between">
+            <span className="text-[11px] font-bold text-[#858585] uppercase tracking-wider">
+              {activeView === 'editor' ? 'Explorer' : 'Detective'}
+            </span>
+            <div className="flex items-center gap-1">
+              {activeView === 'editor' && workspaceRoot && (
+                <button 
+                  onClick={onRefreshTree}
+                  className="text-[#858585] hover:text-[#ffffff] transition-colors p-1"
+                >
+                  <RefreshCw className={cn("w-3.5 h-3.5", isFetchingTree && "animate-spin")} />
+                </button>
               )}
-            </div>
-          )}
-
-          {activeView === 'style_detective' && (
-            <div className="p-4 text-center space-y-4">
-              <Fingerprint className="w-8 h-8 text-[#007acc] mx-auto opacity-50" />
-              <p className="text-[11px] text-[#858585]">Configure your repository-wide style preferences to guide the refactoring engine.</p>
-            </div>
-          )}
-        </div>
-
-        <div className="p-3 border-t border-[#3c3c3c]">
-          <div className="flex items-center gap-2 px-2 py-1.5 bg-[#1e1e1e] rounded-sm border border-[#3c3c3c]">
-            <Brain className="w-3.5 h-3.5 text-[#007acc]" />
-            <div className="flex flex-col">
-              <span className="text-[9px] font-bold text-[#ffffff] leading-none uppercase">Octamind AI</span>
-              <span className="text-[8px] text-[#858585] font-mono">Engine Active</span>
+              <button 
+                onClick={store.toggleSidebar}
+                className="text-[#858585] hover:text-[#ffffff] transition-colors p-1"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
             </div>
           </div>
-        </div>
-      </aside>
+
+          <div className="flex-1 overflow-y-auto">
+            {activeView === 'editor' && (
+              <div className="py-2">
+                {workspaceRoot ? (
+                  <FileExplorer 
+                    items={fileTree} 
+                    activePath={activeFilePath} 
+                    onFileClick={onOpenFile} 
+                  />
+                ) : (
+                  <div className="py-8 px-4 text-center space-y-4">
+                    <p className="text-[11px] text-[#858585] leading-relaxed">
+                      No workspace opened. You are in Single File Mode.
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={onOpenWorkspace}
+                      className="h-7 text-[10px] border-[#3c3c3c] text-[#cccccc] hover:bg-[#2a2d2e] w-full flex items-center justify-center gap-2 px-1 overflow-hidden"
+                    >
+                      <FolderOpen className="w-3 h-3 shrink-0" />
+                      <span className="truncate">Open Workspace</span>
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeView === 'style_detective' && (
+              <div className="p-4 text-center space-y-4">
+                <Fingerprint className="w-8 h-8 text-[#007acc] mx-auto opacity-50" />
+                <p className="text-[11px] text-[#858585]">Configure your repository-wide style preferences to guide the refactoring engine.</p>
+              </div>
+            )}
+          </div>
+
+          <div className="p-3 border-t border-[#3c3c3c]">
+            <div className="flex items-center gap-2 px-2 py-1.5 bg-[#1e1e1e] rounded-sm border border-[#3c3c3c]">
+              <Brain className="w-3.5 h-3.5 text-[#007acc]" />
+              <div className="flex flex-col">
+                <span className="text-[9px] font-bold text-[#ffffff] leading-none uppercase">Octamind AI</span>
+                <span className="text-[8px] text-[#858585] font-mono">Engine Active</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+      )}
 
       {/* Backdrop for mobile */}
       {store.isMobileMenuOpen && (

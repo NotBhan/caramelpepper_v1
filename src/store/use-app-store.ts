@@ -44,6 +44,7 @@ export interface AppState {
   isPickerDismissed: boolean;
   activeView: AppView;
   isMobileMenuOpen: boolean;
+  isSidebarCollapsed: boolean;
 }
 
 const AppContext = createContext<ReturnType<typeof useAppStoreLogic> | null>(null);
@@ -69,6 +70,7 @@ function useAppStoreLogic(initialCode: string = "") {
     isPickerDismissed: false,
     activeView: 'editor',
     isMobileMenuOpen: false,
+    isSidebarCollapsed: false,
   });
 
   useEffect(() => {
@@ -401,7 +403,11 @@ function useAppStoreLogic(initialCode: string = "") {
   }, []);
 
   const setActiveView = useCallback((view: AppView) => {
-    setState(prev => ({ ...prev, activeView: view }));
+    setState(prev => ({ ...prev, activeView: view, isSidebarCollapsed: false }));
+  }, []);
+
+  const toggleSidebar = useCallback(() => {
+    setState(prev => ({ ...prev, isSidebarCollapsed: !prev.isSidebarCollapsed }));
   }, []);
 
   const toggleMobileMenu = useCallback(() => {
@@ -435,6 +441,7 @@ function useAppStoreLogic(initialCode: string = "") {
     saveActiveFile,
     saveFileAs,
     setActiveView,
+    toggleSidebar,
     toggleMobileMenu,
     closeMobileMenu,
     isGuest: state.user?.isAnonymous || false
