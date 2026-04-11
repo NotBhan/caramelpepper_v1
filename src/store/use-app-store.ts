@@ -96,7 +96,7 @@ function useAppStoreLogic(initialCode: string = "") {
 
   const login = useCallback(async () => {
     if (!auth || !isConfigured) {
-      alert("Cloud features are not configured. Please set up your .env file with valid Firebase credentials.");
+      alert("Octamind AI: Cloud features (Authentication) are not correctly configured. Please ensure your .env file contains valid Firebase API Key and Auth Domain.");
       return;
     }
     
@@ -115,11 +115,14 @@ function useAppStoreLogic(initialCode: string = "") {
         await signInWithPopup(auth, githubProvider);
       }
     } catch (error: any) {
-      console.error("[AUTH]: Login failed.", error.message);
+      console.error("[AUTH]: Login/Link failed.", error.message);
       
-      // Provide actionable feedback for the specific API Key error
       if (error.code === 'auth/api-key-not-valid') {
-        alert("The Firebase API Key provided is invalid. Please double-check your .env.local file.");
+        alert("Octamind AI: The Firebase API Key provided is invalid.");
+      } else if (error.code === 'auth/auth-domain-config-required') {
+        alert("Octamind AI: Auth Domain is missing in configuration. Check your .env file.");
+      } else if (error.code === 'auth/unauthorized-domain') {
+        alert("Octamind AI: This domain is not authorized in your Firebase Console.");
       } else if (error.code !== 'auth/popup-closed-by-user') {
         alert(`Authentication error: ${error.message}`);
       }

@@ -11,12 +11,16 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Robust validation to ensure Firebase only initializes with real credentials
+// Comprehensive validation for Firebase initialization
+// Requires both API Key and Auth Domain to be properly set
 const isConfigured = 
   !!firebaseConfig.apiKey && 
   firebaseConfig.apiKey !== 'undefined' &&
   firebaseConfig.apiKey !== 'your_api_key' &&
-  !firebaseConfig.apiKey.startsWith('your_');
+  !firebaseConfig.apiKey.startsWith('your_') &&
+  !!firebaseConfig.authDomain &&
+  firebaseConfig.authDomain !== 'undefined' &&
+  !firebaseConfig.authDomain.startsWith('your_');
 
 let app = null;
 let auth = null;
@@ -28,11 +32,11 @@ if (isConfigured) {
     auth = getAuth(app);
     db = getFirestore(app);
   } catch (error) {
-    console.error("[FIREBASE]: Initialization failed. This usually means your configuration is incorrect.", error);
+    console.error("[FIREBASE]: Initialization failed. Check your environment variables.", error);
   }
 } else {
   if (typeof window !== 'undefined') {
-    console.warn("[AUTH]: Firebase is NOT configured. Cloud features (GitHub Auth, Remote Vault) are disabled. To enable, update your .env file with valid Firebase credentials.");
+    console.warn("[AUTH]: Firebase is partially or incorrectly configured. Cloud features are disabled. Ensure NEXT_PUBLIC_FIREBASE_API_KEY and NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN are set in .env.");
   }
 }
 
