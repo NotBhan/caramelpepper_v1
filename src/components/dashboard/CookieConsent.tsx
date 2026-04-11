@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog"
 
 interface CookieConsentProps {
@@ -47,11 +49,13 @@ export function CookieConsent({ onConsent }: CookieConsentProps) {
               <Cookie className="w-8 h-8 text-[#007acc]" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-xl font-headline font-bold text-[#ffffff]">Workspace Persistence</h3>
-              <p className="text-sm text-[#858585] leading-relaxed">
+              <DialogTitle className="text-xl font-headline font-bold text-[#ffffff]">
+                Workspace Persistence
+              </DialogTitle>
+              <DialogDescription className="text-sm text-[#858585] leading-relaxed">
                 Octamind AI uses essential cookies and local storage to persist your IDE configuration, 
                 workspace roots, and editor preferences across sessions.
-              </p>
+              </DialogDescription>
             </div>
           </div>
 
