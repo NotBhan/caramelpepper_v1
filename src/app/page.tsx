@@ -86,6 +86,14 @@ export default function Dashboard() {
     }
   }
 
+  // Determine if the workspace picker should be shown automatically
+  const isGitHubAuthenticated = store.user && !store.user.isAnonymous;
+  const isWorkspaceActive = store.workspaceRoot !== null;
+  const showPicker = !store.loadingAuth && 
+                     !store.isPickerDismissed && 
+                     !isWorkspaceActive && 
+                     !isGitHubAuthenticated;
+
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       <MenuBar />
@@ -149,7 +157,7 @@ export default function Dashboard() {
       </div>
       
       <WorkspacePickerModal 
-        isOpen={!store.isPickerDismissed && store.workspaceRoot === null}
+        isOpen={showPicker}
         onSelect={store.setWorkspaceRoot}
         onSkip={store.dismissPicker}
       />
